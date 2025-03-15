@@ -35,11 +35,9 @@ export class RollsService {
         return { code: 0, msg: 'Insufficient ball count' };
       }
 
-      // Trừ 6 bóng
-      user.ballCount -= 6;
       await this.prisma.user.update({
         where: { uin },
-        data: { ballCount: user.ballCount },
+        data: { ballCount: { decrement: 6 } },
       });
 
       const isValidGate = data.gate.every(
@@ -119,12 +117,9 @@ export class RollsService {
             const randomBallCount =
               Math.floor(Math.random() * (max - min + 1)) + min;
 
-            (results[5] as number) += randomBallCount;
-            user.ballCount += randomBallCount;
-
             await this.prisma.user.update({
               where: { uin },
-              data: { ballCount: user.ballCount },
+              data: { ballCount: { increment: randomBallCount } },
             });
             break;
 
