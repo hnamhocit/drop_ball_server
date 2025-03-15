@@ -1,0 +1,58 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model GiftCode {
+  id             Int      @id @default(autoincrement())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  code           String   @unique
+  expiredDate    DateTime
+  remainingCount Int
+  reward         Reward[]
+}
+
+model Gift {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  name      String
+  index     Int
+  maxCount  Int
+  rewards   Reward[]
+}
+
+model Reward {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  count       Int?
+  phoneNumber String?
+  address     String?
+  displayName String?
+  giftId      Int?
+  gift        Gift?      @relation(fields: [giftId], references: [id])
+  userUin     String
+  user        User       @relation(fields: [userUin], references: [uin])
+  giftCodes   GiftCode[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  uin       String   @unique
+  ballCount Int
+  rewards   Reward[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
