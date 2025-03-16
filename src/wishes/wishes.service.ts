@@ -39,4 +39,16 @@ export class WishesService {
       return { code: 0, msg: 'Create wish error: ' + JSON.stringify(error) };
     }
   }
+
+  async getWishes() {
+    try {
+      const wishes = await this.prisma.wish.findMany();
+      return { code: 1, data: wishes };
+    } catch (error) {
+      return {
+        code: 0,
+        msg: 'Get wishes error: ' + JSON.stringify(error),
+      };
+    }
+  }
 }
