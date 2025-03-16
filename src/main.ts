@@ -1,3 +1,5 @@
+import fs from 'fs';
+
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
@@ -6,7 +8,13 @@ import { AuthGuard } from './common/guards/auth.guard';
 import { PrismaService } from './prisma/prisma.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const httpsOptions = {
+    key: fs.readFileSync('../ssl/privatekey.key'),
+    cert: fs.readFileSync('../ssl/certificate.crt'),
+  };
+
+  const app = await NestFactory.create(AppModule, { httpsOptions });
+
   app.enableCors();
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
