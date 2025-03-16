@@ -1,4 +1,5 @@
-import fs from 'node:fs';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -7,10 +8,13 @@ import { AppModule } from './app.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { PrismaService } from './prisma/prisma.service';
 
+const privateKeyPath = join(process.cwd(), 'ssl', 'privatekey.key');
+const certificatePath = join(process.cwd(), 'ssl', 'certificate.crt');
+
 async function bootstrap() {
   const httpsOptions = {
-    key: fs.readFileSync('../ssl/privatekey.key'),
-    cert: fs.readFileSync('../ssl/certificate.crt'),
+    key: readFileSync(privateKeyPath, 'utf-8'),
+    cert: readFileSync(certificatePath, 'utf-8'),
   };
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
