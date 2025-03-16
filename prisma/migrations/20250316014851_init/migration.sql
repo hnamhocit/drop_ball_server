@@ -1,4 +1,15 @@
 -- CreateTable
+CREATE TABLE `Wish` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `userUin` VARCHAR(191) NOT NULL,
+    `message` VARCHAR(191) NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `GiftCode` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -6,7 +17,6 @@ CREATE TABLE `GiftCode` (
     `code` VARCHAR(191) NOT NULL,
     `expiredDate` DATETIME(3) NOT NULL,
     `remainingCount` INTEGER NOT NULL,
-    `rewardId` INTEGER NULL,
 
     UNIQUE INDEX `GiftCode_code_key`(`code`),
     PRIMARY KEY (`id`)
@@ -51,11 +61,26 @@ CREATE TABLE `User` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `_GiftCodeToReward` (
+    `A` INTEGER NOT NULL,
+    `B` INTEGER NOT NULL,
+
+    UNIQUE INDEX `_GiftCodeToReward_AB_unique`(`A`, `B`),
+    INDEX `_GiftCodeToReward_B_index`(`B`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
-ALTER TABLE `GiftCode` ADD CONSTRAINT `GiftCode_rewardId_fkey` FOREIGN KEY (`rewardId`) REFERENCES `Reward`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Wish` ADD CONSTRAINT `Wish_userUin_fkey` FOREIGN KEY (`userUin`) REFERENCES `User`(`uin`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Reward` ADD CONSTRAINT `Reward_giftId_fkey` FOREIGN KEY (`giftId`) REFERENCES `Gift`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Reward` ADD CONSTRAINT `Reward_userUin_fkey` FOREIGN KEY (`userUin`) REFERENCES `User`(`uin`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_GiftCodeToReward` ADD CONSTRAINT `_GiftCodeToReward_A_fkey` FOREIGN KEY (`A`) REFERENCES `GiftCode`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `_GiftCodeToReward` ADD CONSTRAINT `_GiftCodeToReward_B_fkey` FOREIGN KEY (`B`) REFERENCES `Reward`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

@@ -16,6 +16,7 @@ datasource db {
 model Wish {
   id        Int      @id @default(autoincrement())
   userUin   String
+  message   String
   user      User     @relation(fields: [userUin], references: [uin])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
