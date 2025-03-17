@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator'
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateRewardDTO {
   @IsString()
@@ -11,5 +11,5 @@ export class UpdateRewardDTO {
 
   @IsString()
   @IsNotEmpty()
-  Address: string;
+  address: string;
 }
