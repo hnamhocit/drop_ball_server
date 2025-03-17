@@ -64,7 +64,7 @@ export class RollsService {
 
         const weights = new Map<number, number>();
         for (let j = i; j < 6; j++) {
-          weights.set(j, j === 1 ? 10 : 30);
+          weights.set(j, j === 1 ? 1 : 3);
         }
 
         const selectedGate = weightedRandomSelector(weights);
@@ -127,7 +127,7 @@ export class RollsService {
             break;
 
           case 5:
-            const ballCount = randomNumber(20, 1);
+            const ballCount = randomNumber(2, 1);
 
             await this.prisma.user.update({
               where: { uin },

@@ -43,7 +43,7 @@ export class AttendanceService {
       },
     });
 
-    const ballCount = randomNumber(20, 1);
+    const ballCount = randomNumber(2, 1);
     const results: {
       type: number;
       name: string;
