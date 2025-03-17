@@ -1,8 +1,7 @@
-import { PrismaService } from 'src/prisma/prisma.service'
+import { Injectable } from '@nestjs/common';
 
-import { Injectable } from '@nestjs/common'
-
-import { UpdateRewardDTO } from './dtos/update-reward.dto'
+import { PrismaService } from '../prisma/prisma.service';
+import { UpdateRewardDTO } from './dtos/update-reward.dto';
 
 @Injectable()
 export class RewardsService {

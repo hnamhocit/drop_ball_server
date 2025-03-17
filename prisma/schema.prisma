@@ -27,8 +27,9 @@ model GiftCode {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   code           String   @unique
-  expiredDate    DateTime
   remainingCount Int
+  users          User[]
+  usedByUins     Json
   reward         Reward[]
 }
 
@@ -58,11 +59,12 @@ model Reward {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  uin       String   @unique
+  id        Int        @id @default(autoincrement())
+  uin       String     @unique
   ballCount Int
   rewards   Reward[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   Wish      Wish[]
+  giftCodes GiftCode[]
 }

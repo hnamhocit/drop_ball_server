@@ -1,8 +1,9 @@
-import { PrismaService } from 'src/prisma/prisma.service'
+import { PrismaService } from 'src/prisma/prisma.service';
 
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 
-import { decrypt } from '../utils/crypto'
+import { InvalidTokenException } from '../exceptions/invalid-token.exception';
+import { decrypt } from '../utils/crypto';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -10,15 +11,24 @@ export class AuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    const token = request.headers['authorization'];
+    const authorization = request.headers['authorization'];
 
-    if (!token) {
-      throw new UnauthorizedException('Missing token');
+    if (!authorization) {
+      throw new InvalidTokenException('Authorization header is required!');
+    }
+
+    const token = authorization.split(' ')[1];
+    if (token.length === 0 || !authorization.includes('Bearer')) {
+      throw new InvalidTokenException('Token, Bearer is required!');
+    }
+
+    const uin = decrypt(token);
+
+    if (!uin) {
+      throw new InvalidTokenException('UIN is invalid!');
     }
 
     try {
-      const uin = decrypt(token);
-
       const existingUser = await this.prisma.user.findUnique({
         where: { uin: uin },
       });
@@ -34,7 +44,7 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Invalid or tampered token');
+      throw new InvalidTokenException();
     }
   }
 }

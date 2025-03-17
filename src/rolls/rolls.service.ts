@@ -1,9 +1,9 @@
-import { weightedRandomSelector } from 'src/common/utils/weightedRandomSelector';
-import { PrismaService } from 'src/prisma/prisma.service';
-
 import { Injectable } from '@nestjs/common';
-import { Gift, Reward } from '@prisma/client';
+import { Gift, GiftCode, Reward } from '@prisma/client';
 
+import { randomNumber } from '../common/utils/randomNumber';
+import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
+import { PrismaService } from '../prisma/prisma.service';
 import { RandomDTO } from './dtos/random.dto';
 
 @Injectable()
@@ -19,7 +19,6 @@ export class RollsService {
         };
       }
 
-      // Tìm người dùng trong cơ sở dữ liệu
       const user = await this.prisma.user.findFirst({
         where: { uin },
       });
@@ -75,7 +74,7 @@ export class RollsService {
           weights[j] = j === 1 ? 10 : 30;
         }
 
-        const selectedGate = weightedRandomSelector(weights); // Hàm chọn ngẫu nhiên theo trọng số
+        const selectedGate = weightedRandomSelector(weights);
         switch (selectedGate) {
           case 1:
           case 2:
@@ -84,7 +83,12 @@ export class RollsService {
             break;
 
           case 4:
-            const giftCodes = await this.prisma.giftCode.findMany();
+            const giftCodes = await this.prisma.giftCode.findMany({
+              where: {
+                remainingCount: { gt: 0 },
+              },
+            });
+
             if (!giftCodes || giftCodes.length === 0) {
               return {
                 code: 0,
@@ -98,14 +102,14 @@ export class RollsService {
               selectedGiftCodes.size <
               Math.min((results[4] as string[]).length, giftCodes.length)
             ) {
-              const randomIndex = Math.floor(Math.random() * giftCodes.length);
-              const randomGiftCode = giftCodes[randomIndex].code;
+              const randomGiftCode = this.getRandomGiftCode(giftCodes, uin);
+              const code = randomGiftCode?.code as string;
 
-              if (!selectedGiftCodes.has(randomGiftCode)) {
-                selectedGiftCodes.add(randomGiftCode);
+              if (!selectedGiftCodes.has(code)) {
+                selectedGiftCodes.add(code);
 
                 if (Array.isArray(results[4])) {
-                  results[4].push(randomGiftCode);
+                  results[4].push(code);
                 }
               }
             }
@@ -153,6 +157,29 @@ export class RollsService {
       }
     }
     return count;
+  }
+
+  private getRandomGiftCode(availableGiftCodes: GiftCode[], uin: string) {
+    if (availableGiftCodes.length === 0) {
+      console.log('No available gift codes to assign.');
+      return null;
+    }
+
+    const randomIndex = Math.floor(Math.random() * availableGiftCodes.length);
+    const selectedGiftCode = availableGiftCodes[randomIndex];
+
+    const userAlreadyHasGiftCode = (
+      selectedGiftCode.usedByUins as string[]
+    ).includes(uin);
+    if (userAlreadyHasGiftCode) {
+      console.log(`User already has gift code: ${selectedGiftCode.code}`);
+      return null;
+    }
+
+    console.log(
+      `Assigned gift code: ${selectedGiftCode.code} to user UIN: ${uin}`,
+    );
+    return selectedGiftCode;
   }
 
   async createReward(
@@ -209,8 +236,6 @@ export class RollsService {
                 gift1.maxCount - gift1RewardCount,
               );
 
-              console.log('Case 1 gift 1 create');
-
               await this.prisma.reward.create({
                 data: {
                   giftId: gift1.id,
@@ -233,8 +258,6 @@ export class RollsService {
                     remaining,
                     gift2.maxCount - gift2RewardCount,
                   );
-
-                  console.log('Case 1 gift 2 create');
 
                   await this.prisma.reward.create({
                     data: {
@@ -259,8 +282,6 @@ export class RollsService {
                         remaining,
                         gift3.maxCount - gift3RewardCount,
                       );
-
-                      console.log('Case 1 gift 3 create');
 
                       await this.prisma.reward.create({
                         data: {
@@ -291,8 +312,6 @@ export class RollsService {
                 gift2.maxCount - gift2RewardCount,
               );
 
-              console.log('Case 2 gift 2 create');
-
               await this.prisma.reward.create({
                 data: {
                   giftId: gift2.id,
@@ -316,8 +335,6 @@ export class RollsService {
                     remaining,
                     gift3.maxCount - gift3RewardCount,
                   );
-
-                  console.log('Case 2 gift 3 create');
 
                   await this.prisma.reward.create({
                     data: {
@@ -345,8 +362,6 @@ export class RollsService {
                 gift3.maxCount - gift3RewardCount,
               );
 
-              console.log('Case 3 gift 3 create');
-
               await this.prisma.reward.create({
                 data: {
                   giftId: gift3.id,
@@ -366,8 +381,6 @@ export class RollsService {
 
             if (giftCodeSlice.length > 0) {
               try {
-                console.log('Create reward gift code');
-
                 await this.prisma.reward.create({
                   data: {
                     userUin: uin,
@@ -392,6 +405,53 @@ export class RollsService {
       return null;
     } catch (err) {
       throw new Error(`Error creating rewards: ${err.message}`);
+    }
+  }
+
+  async getPool(uin: string) {
+    try {
+      const itemsWeight = {
+        1: 60,
+        2: 40,
+      };
+
+      const randomKey = weightedRandomSelector(itemsWeight);
+      const ballCount = randomNumber(24, 6);
+      const giftCodes = await this.prisma.giftCode.findMany({
+        where: { remainingCount: { gt: 0 } },
+      });
+      const giftCode = this.getRandomGiftCode(giftCodes, uin);
+
+      if (randomKey === 1) {
+        await this.prisma.user.update({
+          where: {
+            uin,
+          },
+          data: {
+            ballCount: { increment: ballCount },
+          },
+        });
+      } else if (randomKey === 2) {
+        await this.prisma.user.update({
+          where: {
+            uin,
+          },
+          data: {
+            giftCodes: { connect: { id: giftCode?.id } },
+          },
+        });
+      }
+
+      return {
+        code: 1,
+        msg: 'Success',
+        data: {
+          ballCount,
+          giftCode: giftCode?.code,
+        },
+      };
+    } catch (error) {
+      return { code: 0, msg: 'Get pool error: ' + JSON.stringify(error) };
     }
   }
 }
