@@ -15,7 +15,7 @@ datasource db {
 
 model Wish {
   id        Int      @id @default(autoincrement())
-  userUin   String
+  userUin   String   @unique
   message   String
   user      User     @relation(fields: [userUin], references: [uin])
   createdAt DateTime @default(now())
@@ -59,12 +59,15 @@ model Reward {
 }
 
 model User {
-  id        Int        @id @default(autoincrement())
-  uin       String     @unique
-  ballCount Int
-  rewards   Reward[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  Wish      Wish[]
-  giftCodes GiftCode[]
+  id                 Int        @id @default(autoincrement())
+  checkInCount       Int        @default(0)
+  lastCheckIn        DateTime?
+  dailyRewardClaimed Boolean    @default(false)
+  uin                String     @unique
+  ballCount          Int
+  rewards            Reward[]
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  wish               Wish?
+  giftCodes          GiftCode[]
 }

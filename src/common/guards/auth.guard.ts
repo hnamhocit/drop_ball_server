@@ -1,9 +1,9 @@
-import { PrismaService } from 'src/prisma/prisma.service';
+import { PrismaService } from 'src/prisma/prisma.service'
 
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 
-import { InvalidTokenException } from '../exceptions/invalid-token.exception';
-import { decrypt } from '../utils/crypto';
+import { InvalidTokenException } from '../exceptions/invalid-token.exception'
+import { decrypt } from '../utils/crypto'
 
 @Injectable()
 export class AuthGuard implements CanActivate {
@@ -18,7 +18,7 @@ export class AuthGuard implements CanActivate {
     }
 
     const token = authorization.split(' ')[1];
-    if (token.length === 0 || !authorization.includes('Bearer')) {
+    if (!token || token.length === 0 || !authorization.includes('Bearer')) {
       throw new InvalidTokenException('Token, Bearer is required!');
     }
 

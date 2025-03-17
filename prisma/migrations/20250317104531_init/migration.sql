@@ -6,6 +6,7 @@ CREATE TABLE `Wish` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
 
+    UNIQUE INDEX `Wish_userUin_key`(`userUin`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -16,6 +17,7 @@ CREATE TABLE `GiftCode` (
     `updatedAt` DATETIME(3) NOT NULL,
     `code` VARCHAR(191) NOT NULL,
     `remainingCount` INTEGER NOT NULL,
+    `usedByUins` JSON NOT NULL,
 
     UNIQUE INDEX `GiftCode_code_key`(`code`),
     PRIMARY KEY (`id`)
@@ -51,6 +53,9 @@ CREATE TABLE `Reward` (
 -- CreateTable
 CREATE TABLE `User` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `checkInCount` INTEGER NOT NULL DEFAULT 0,
+    `lastCheckIn` DATETIME(3) NULL,
+    `dailyRewardClaimed` BOOLEAN NOT NULL DEFAULT false,
     `uin` VARCHAR(191) NOT NULL,
     `ballCount` INTEGER NOT NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),

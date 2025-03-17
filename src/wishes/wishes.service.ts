@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
 
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateWithDTO } from './dtos/create-wish.dto';
+import { PrismaService } from '../prisma/prisma.service'
+import { CreateWithDTO } from './dtos/create-wish.dto'
 
 @Injectable()
 export class WishesService {
@@ -10,26 +10,29 @@ export class WishesService {
   async createWish(uin: string, data: CreateWithDTO) {
     try {
       const existingWish = await this.prisma.wish.findFirst({
-        where: { userUin: data.userUin },
+        where: { userUin: uin },
       });
 
-      if (!existingWish) {
-        await this.prisma.user.update({
-          where: {
-            uin,
-          },
-          data: {
-            ballCount: { increment: 5 },
-          },
-        });
+      if (existingWish) {
+        return {
+          code: 0,
+          msg: 'Wish already exists!',
+        };
       }
 
       const newWish = await this.prisma.wish.create({
         data: {
           message: data.message,
           user: {
-            connect: { uin: data.userUin },
+            connect: { uin },
           },
+        },
+      });
+
+      await this.prisma.user.update({
+        where: { uin },
+        data: {
+          ballCount: { increment: 5 },
         },
       });
 
