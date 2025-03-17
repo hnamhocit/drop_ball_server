@@ -1,4 +1,4 @@
-import { Controller, Get, Req } from '@nestjs/common';
+import { Controller, Get, Patch, Req } from '@nestjs/common';
 
 import { IRequest } from '../common/types/request';
 import { UsersService } from './users.service';
@@ -11,4 +11,7 @@ export class UsersController {
   getUser(@Req() req: IRequest) {
     return this.usersService.getUser(req.user.uin);
   }
+
+  @Patch('/me')
+  updateUser() {}
 }

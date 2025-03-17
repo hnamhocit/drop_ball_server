@@ -43,22 +43,22 @@ model GiftCode {
 }
 
 model Reward {
-  id          Int        @id @default(autoincrement())
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  count       Int
-  phoneNumber String?
-  address     String?
-  displayName String?
-  giftId      Int?
-  gift        Gift?      @relation(fields: [giftId], references: [id])
-  userUin     String
-  user        User       @relation(fields: [userUin], references: [uin])
-  giftCodes   GiftCode[]
+  id        Int        @id @default(autoincrement())
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  count     Int
+  giftId    Int?
+  gift      Gift?      @relation(fields: [giftId], references: [id])
+  userUin   String
+  user      User       @relation(fields: [userUin], references: [uin])
+  giftCodes GiftCode[]
 }
 
 model User {
   id                 Int        @id @default(autoincrement())
+  address            String?
+  phoneNumber        String?
+  displayName        String?
   checkInCount       Int        @default(0)
   lastCheckIn        DateTime?
   dailyRewardClaimed Boolean    @default(false)
