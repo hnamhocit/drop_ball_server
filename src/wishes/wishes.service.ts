@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service'
-import { CreateWithDTO } from './dtos/create-wish.dto'
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { PrismaService } from '../prisma/prisma.service';
+import { CreateWithDTO } from './dtos/create-wish.dto';
 
 @Injectable()
 export class WishesService {
@@ -42,10 +43,30 @@ export class WishesService {
     }
   }
 
-  async getWishes() {
+  async getWishes({ page, pageSize }: PaginationDto) {
     try {
-      const wishes = await this.prisma.wish.findMany();
-      return { code: 1, data: wishes };
+      const [wishes, totalRecords] = await Promise.all([
+        this.prisma.wish.findMany({
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        this.prisma.wish.count(),
+      ]);
+
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      return {
+        code: 1,
+        msg: 'Success',
+        data: {
+          wishes,
+          pagination: {
+            currentPage: page,
+            pageSize: pageSize,
+            totalPages: totalPages,
+          },
+        },
+      };
     } catch (error) {
       return {
         code: 0,

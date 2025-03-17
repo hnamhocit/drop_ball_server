@@ -225,13 +225,15 @@ export class RollsService {
                 gift1.maxCount - gift1RewardCount,
               );
 
-              await this.prisma.reward.create({
-                data: {
-                  giftId: gift1.id,
-                  count: allocatedCount,
-                  userUin: uin,
-                },
-              });
+              if (allocatedCount > 0) {
+                await this.prisma.reward.create({
+                  data: {
+                    giftId: gift1.id,
+                    count: allocatedCount,
+                    userUin: uin,
+                  },
+                });
+              }
 
               let remaining = _value - allocatedCount;
               if (remaining > 0) {
@@ -248,13 +250,15 @@ export class RollsService {
                     gift2.maxCount - gift2RewardCount,
                   );
 
-                  await this.prisma.reward.create({
-                    data: {
-                      giftId: gift2.id,
-                      count: allocatedCount,
-                      userUin: uin,
-                    },
-                  });
+                  if (allocatedCount > 0) {
+                    await this.prisma.reward.create({
+                      data: {
+                        giftId: gift2.id,
+                        count: allocatedCount,
+                        userUin: uin,
+                      },
+                    });
+                  }
 
                   remaining -= allocatedCount;
 
@@ -272,13 +276,15 @@ export class RollsService {
                         gift3.maxCount - gift3RewardCount,
                       );
 
-                      await this.prisma.reward.create({
-                        data: {
-                          giftId: gift3.id,
-                          count: allocatedCount,
-                          userUin: uin,
-                        },
-                      });
+                      if (allocatedCount > 0) {
+                        await this.prisma.reward.create({
+                          data: {
+                            giftId: gift3.id,
+                            count: allocatedCount,
+                            userUin: uin,
+                          },
+                        });
+                      }
                     }
                   }
                 }
@@ -301,13 +307,15 @@ export class RollsService {
                 gift2.maxCount - gift2RewardCount,
               );
 
-              await this.prisma.reward.create({
-                data: {
-                  giftId: gift2.id,
-                  count: allocatedCount,
-                  userUin: uin,
-                },
-              });
+              if (allocatedCount > 0) {
+                await this.prisma.reward.create({
+                  data: {
+                    giftId: gift2.id,
+                    count: allocatedCount,
+                    userUin: uin,
+                  },
+                });
+              }
 
               const remaining = _value2 - allocatedCount;
 
@@ -325,13 +333,15 @@ export class RollsService {
                     gift3.maxCount - gift3RewardCount,
                   );
 
-                  await this.prisma.reward.create({
-                    data: {
-                      giftId: gift3.id,
-                      count: allocatedCount,
-                      userUin: uin,
-                    },
-                  });
+                  if (allocatedCount > 0) {
+                    await this.prisma.reward.create({
+                      data: {
+                        giftId: gift3.id,
+                        count: allocatedCount,
+                        userUin: uin,
+                      },
+                    });
+                  }
                 }
               }
             }
@@ -352,13 +362,15 @@ export class RollsService {
                 gift3.maxCount - gift3RewardCount,
               );
 
-              await this.prisma.reward.create({
-                data: {
-                  giftId: gift3.id,
-                  count: allocatedCount,
-                  userUin: uin,
-                },
-              });
+              if (allocatedCount > 0) {
+                await this.prisma.reward.create({
+                  data: {
+                    giftId: gift3.id,
+                    count: allocatedCount,
+                    userUin: uin,
+                  },
+                });
+              }
             }
 
             break;

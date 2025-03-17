@@ -1,3 +1,5 @@
+import { PaginationDto } from 'src/common/dtos/pagination.dto';
+
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -40,10 +42,30 @@ export class GiftcodesService {
     }
   }
 
-  async getGiftCodes() {
+  async getGiftCodes({ page, pageSize }: PaginationDto) {
     try {
-      const giftCodes = await this.prisma.giftCode.findMany();
-      return { code: 1, msg: 'Success', data: giftCodes };
+      const [giftCodes, totalRecords] = await Promise.all([
+        this.prisma.giftCode.findMany({
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
+        this.prisma.giftCode.count(),
+      ]);
+
+      const totalPages = Math.ceil(totalRecords / pageSize);
+
+      return {
+        code: 1,
+        msg: 'Success',
+        data: {
+          giftCodes,
+          pagination: {
+            currentPage: page,
+            pageSize: pageSize,
+            totalPages: totalPages,
+          },
+        },
+      };
     } catch (error) {
       return {
         code: 0,

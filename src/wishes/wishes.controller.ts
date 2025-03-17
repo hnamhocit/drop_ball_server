@@ -1,7 +1,8 @@
 import { IRequest } from 'src/common/types/request';
 
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req } from '@nestjs/common';
 
+import { PaginationDto } from '../common/dtos/pagination.dto';
 import { CreateWithDTO } from './dtos/create-wish.dto';
 import { WishesService } from './wishes.service';
 
@@ -15,7 +16,7 @@ export class WishesController {
   }
 
   @Get()
-  getWishes() {
-    return this.wishesService.getWishes();
+  getWishes(@Query() query: PaginationDto) {
+    return this.wishesService.getWishes(query);
   }
 }

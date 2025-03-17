@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Param, Patch } from '@nestjs/common'
+import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
 
-import { UpdateRewardDTO } from './dtos/update-reward.dto'
-import { RewardsService } from './rewards.service'
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { UpdateRewardDTO } from './dtos/update-reward.dto';
+import { RewardsService } from './rewards.service';
 
 @Controller('rewards')
 export class RewardsController {
   constructor(private readonly rewardsService: RewardsService) {}
 
   @Get()
-  getRewards() {
-    return this.rewardsService.getRewards();
+  getRewards(@Query() query: PaginationDto) {
+    return this.rewardsService.getRewards(query);
   }
 
   @Patch(':id')

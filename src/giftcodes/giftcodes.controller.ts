@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Post } from '@nestjs/common'
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 
-import { CreateGiftCodeDTO } from './dtos/create-gift-code.dto'
-import { GiftcodesService } from './giftcodes.service'
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import { CreateGiftCodeDTO } from './dtos/create-gift-code.dto';
+import { GiftcodesService } from './giftcodes.service';
 
 @Controller('giftcodes')
 export class GiftcodesController {
   constructor(private readonly giftcodesService: GiftcodesService) {}
 
   @Get()
-  getGiftCodes() {
-    return this.giftcodesService.getGiftCodes();
+  getGiftCodes(@Query() query: PaginationDto) {
+    return this.giftcodesService.getGiftCodes(query);
   }
 
   @Post()
