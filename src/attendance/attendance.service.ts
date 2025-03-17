@@ -26,8 +26,11 @@ export class AttendanceService {
 
     if (lastCheckIn === today.getTime()) {
       return {
-        message: 'You have already checked in today.',
-        count: user.checkInCount,
+        code: 0,
+        msg: 'You have already checked in today.',
+        data: {
+          checkInCount: user.checkInCount,
+        },
       };
     }
 
