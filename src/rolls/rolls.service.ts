@@ -13,13 +13,6 @@ export class RollsService {
 
   async random(uin: string, data: RandomDTO) {
     try {
-      if (!uin) {
-        return {
-          code: 0,
-          msg: 'UIN does not exist!',
-        };
-      }
-
       const user = await this.prisma.user.findFirst({
         where: { uin },
       });
