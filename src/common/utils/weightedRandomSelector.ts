@@ -1,16 +1,17 @@
-export function weightedRandomSelector(weights: { [key: number]: number }) {
+export function weightedRandomSelector(weights: Map<number, number>): number {
   let totalWeight = 0;
-  for (const weight of Object.values(weights)) {
+
+  for (const weight of weights.values()) {
     totalWeight += weight;
   }
 
-  const randomNumber = Math.floor(Math.random() * totalWeight);
-
+  const randomNumber = Math.random() * totalWeight;
   let cumulativeWeight = 0;
-  for (const [item, weight] of Object.entries(weights)) {
+
+  for (const [item, weight] of weights.entries()) {
     cumulativeWeight += weight;
     if (randomNumber < cumulativeWeight) {
-      return parseInt(item, 10);
+      return item;
     }
   }
 

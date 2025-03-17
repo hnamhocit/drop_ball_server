@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { Gift, GiftCode, Reward } from '@prisma/client';
+import { Gift } from '@prisma/client';
 
 import { randomNumber } from '../common/utils/randomNumber';
+import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward';
 import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
 import { PrismaService } from '../prisma/prisma.service';
 import { RandomDTO } from './dtos/random.dto';
@@ -36,12 +37,13 @@ export class RollsService {
 
       await this.prisma.user.update({
         where: { uin },
-        data: { ballCount: { decrement: 6 } },
+        data: { ballCount: { decrement: data.gate.length } },
       });
 
       const isValidGate = data.gate.every(
         (gateValue) => gateValue >= 1 && gateValue <= 6,
       );
+
       if (!isValidGate) {
         return {
           code: 0,
@@ -49,82 +51,97 @@ export class RollsService {
         };
       }
 
-      const results: { [key: number]: number | string[] } = {
-        1: 0,
-        2: 0,
-        3: 0,
-        4: [],
-        5: 0,
-      };
+      const results = new Map<number, number | string[]>([
+        [1, 0],
+        [2, 0],
+        [3, 0],
+        [4, []],
+        [5, 0],
+      ]);
 
-      const gate = data.gate;
-      const gateLength = gate.length;
-
+      const gateLength = data.gate.length;
       const gifts = await this.prisma.gift.findMany();
+
       if (!gifts) {
         return { code: 0, msg: 'Get gifts error!' };
       }
 
-      for (let i = 0; i < gateLength; i++) {
-        if (i === 6) continue;
+      for (let i = 1; i <= gateLength; i++) {
+        if (i === 6) break;
 
-        const weights = {};
-        for (let j = i; j < gateLength; j++) {
-          if (j === 6) break;
-          weights[j] = j === 1 ? 10 : 30;
+        const weights = new Map<number, number>();
+        for (let j = i; j < 6; j++) {
+          weights.set(j, j === 1 ? 10 : 30);
         }
 
         const selectedGate = weightedRandomSelector(weights);
+
         switch (selectedGate) {
           case 1:
           case 2:
           case 3:
-            (results[selectedGate] as number)++;
+            results.set(selectedGate, (results.get(i) as number) + 1);
             break;
 
           case 4:
             const giftCodes = await this.prisma.giftCode.findMany({
               where: {
-                remainingCount: { gt: 0 },
+                users: {
+                  none: {
+                    uin,
+                  },
+                },
               },
             });
 
-            if (!giftCodes || giftCodes.length === 0) {
+            if (!giftCodes) {
               return {
                 code: 0,
                 msg: 'Get giftcodes error or length = 0!',
               };
             }
 
-            const selectedGiftCodes = new Set();
-
-            while (
-              selectedGiftCodes.size <
-              Math.min((results[4] as string[]).length, giftCodes.length)
-            ) {
-              const randomGiftCode = this.getRandomGiftCode(giftCodes, uin);
-              const code = randomGiftCode?.code as string;
-
-              if (!selectedGiftCodes.has(code)) {
-                selectedGiftCodes.add(code);
-
-                if (Array.isArray(results[4])) {
-                  results[4].push(code);
-                }
-              }
+            if (giftCodes.length === 0) {
+              console.log(
+                'User already have all gift codes or no gift codes exists!',
+              );
+              break;
             }
+
+            const giftCodeArray = (results.get(4) as string[]) || [];
+            const existingCodes = new Set(giftCodeArray);
+
+            if (existingCodes.size === giftCodes.length) {
+              console.log('Tất cả mã quà tặng đã được thêm!');
+              return;
+            }
+
+            let newCode: string;
+            do {
+              const randomIndex = Math.floor(Math.random() * giftCodes.length);
+              newCode = giftCodes[randomIndex].code;
+            } while (existingCodes.has(newCode));
+
+            await this.prisma.giftCode.update({
+              where: { code: newCode },
+              data: {
+                users: { connect: { uin } },
+              },
+            });
+
+            existingCodes.add(newCode);
+            results.set(4, Array.from(existingCodes));
             break;
 
           case 5:
-            const min = 2;
-            const max = 6;
-            const randomBallCount =
-              Math.floor(Math.random() * (max - min + 1)) + min;
+            const ballCount = randomNumber(20, 1);
 
             await this.prisma.user.update({
               where: { uin },
-              data: { ballCount: { increment: randomBallCount } },
+              data: { ballCount: { increment: ballCount } },
             });
+
+            results.set(5, (results.get(5) as number) + ballCount);
             break;
 
           default:
@@ -138,52 +155,19 @@ export class RollsService {
         return { code: 0, msg: `Create reward error: ${err.message}` };
       }
 
-      return { code: 1, msg: 'Get random gift successfully!', data: results };
+      return {
+        code: 1,
+        msg: 'Get random gift successfully!',
+        data: Object.fromEntries(results),
+      };
     } catch (error) {
       console.error(error);
       return { code: 0, msg: 'Internal server error' };
     }
   }
 
-  private getGiftByIndex(gifts: Gift[], targetIndex: number) {
-    return gifts.find((gift) => gift.index === targetIndex) || null;
-  }
-
-  private getRewardCountByGiftId(rewards: Reward[], giftId: number) {
-    let count = 0;
-    for (const reward of rewards) {
-      if (reward.giftId === giftId && reward.count) {
-        count += reward.count;
-      }
-    }
-    return count;
-  }
-
-  private getRandomGiftCode(availableGiftCodes: GiftCode[], uin: string) {
-    if (availableGiftCodes.length === 0) {
-      console.log('No available gift codes to assign.');
-      return null;
-    }
-
-    const randomIndex = Math.floor(Math.random() * availableGiftCodes.length);
-    const selectedGiftCode = availableGiftCodes[randomIndex];
-
-    const userAlreadyHasGiftCode = (
-      selectedGiftCode.usedByUins as string[]
-    ).includes(uin);
-    if (userAlreadyHasGiftCode) {
-      console.log(`User already has gift code: ${selectedGiftCode.code}`);
-      return null;
-    }
-
-    console.log(
-      `Assigned gift code: ${selectedGiftCode.code} to user UIN: ${uin}`,
-    );
-    return selectedGiftCode;
-  }
-
-  async createReward(
-    results: { [key: number]: number | string[] },
+  private async createReward(
+    results: Map<number, number | string[]>,
     gifts: Gift[],
     uin: string,
   ) {
@@ -199,40 +183,45 @@ export class RollsService {
             Skin VIP, số lượng 10
             Skin DIY, số lượng 30
          */
-        await this.prisma.gift.createMany({
-          data: [
-            {
-              name: 'Figure',
-              maxCount: 3,
-              index: 1,
-            },
-            {
-              name: 'Skin VIP',
-              maxCount: 3,
-              index: 10,
-            },
-            {
-              name: 'Skin DIY',
-              maxCount: 30,
-              index: 3,
-            },
-          ],
+        await this.prisma.gift.create({
+          data: {
+            name: 'Model',
+            maxCount: 3,
+            index: 1,
+          },
+        });
+
+        await this.prisma.gift.create({
+          data: {
+            name: 'Skin VIP',
+            maxCount: 10,
+            index: 2,
+          },
+        });
+
+        await this.prisma.gift.create({
+          data: {
+            name: 'Skin DIY',
+            maxCount: 30,
+            index: 3,
+          },
         });
       }
 
-      for (const key in results) {
-        switch (parseInt(key)) {
+      for (const [key, value] of results) {
+        switch (key) {
           case 1:
-            const gift1 = this.getGiftByIndex(gifts, 1);
-            const value = results[key] as number;
-            if (gift1 && value > 0) {
-              const gift1RewardCount = this.getRewardCountByGiftId(
+            const gift1 = getGiftByIndex(gifts, 1);
+            const _value = value as number;
+
+            if (gift1 && _value > 0) {
+              const gift1RewardCount = getRewardCountByGiftId(
                 rewards,
                 gift1.id,
               );
 
               const allocatedCount = Math.min(
-                value,
+                _value,
                 gift1.maxCount - gift1RewardCount,
               );
 
@@ -244,12 +233,12 @@ export class RollsService {
                 },
               });
 
-              let remaining = value - allocatedCount;
+              let remaining = _value - allocatedCount;
               if (remaining > 0) {
-                const gift2 = this.getGiftByIndex(gifts, 3);
+                const gift2 = getGiftByIndex(gifts, 2);
 
                 if (gift2) {
-                  const gift2RewardCount = this.getRewardCountByGiftId(
+                  const gift2RewardCount = getRewardCountByGiftId(
                     rewards,
                     gift2.id,
                   );
@@ -270,10 +259,10 @@ export class RollsService {
                   remaining -= allocatedCount;
 
                   if (remaining > 0) {
-                    const gift3 = this.getGiftByIndex(gifts, 3);
+                    const gift3 = getGiftByIndex(gifts, 3);
 
                     if (gift3) {
-                      const gift3RewardCount = this.getRewardCountByGiftId(
+                      const gift3RewardCount = getRewardCountByGiftId(
                         rewards,
                         gift3.id,
                       );
@@ -298,17 +287,17 @@ export class RollsService {
 
             break;
           case 2:
-            const gift2 = this.getGiftByIndex(gifts, 3);
-            const value2 = results[key] as number;
+            const gift2 = getGiftByIndex(gifts, 2);
+            const _value2 = value as number;
 
-            if (gift2 && value2 > 0) {
-              const gift2RewardCount = this.getRewardCountByGiftId(
+            if (gift2 && _value2 > 0) {
+              const gift2RewardCount = getRewardCountByGiftId(
                 rewards,
                 gift2.id,
               );
 
               const allocatedCount = Math.min(
-                value2,
+                _value2,
                 gift2.maxCount - gift2RewardCount,
               );
 
@@ -320,13 +309,13 @@ export class RollsService {
                 },
               });
 
-              const remaining = value2 - allocatedCount;
+              const remaining = _value2 - allocatedCount;
 
               if (remaining > 0) {
-                const gift3 = this.getGiftByIndex(gifts, 3);
+                const gift3 = getGiftByIndex(gifts, 3);
 
                 if (gift3) {
-                  const gift3RewardCount = this.getRewardCountByGiftId(
+                  const gift3RewardCount = getRewardCountByGiftId(
                     rewards,
                     gift3.id,
                   );
@@ -349,16 +338,17 @@ export class RollsService {
 
             break;
           case 3:
-            const gift3 = this.getGiftByIndex(gifts, 3);
+            const gift3 = getGiftByIndex(gifts, 3);
+            const _value3 = value as number;
 
-            if (gift3 && (results[key] as number) > 0) {
-              const gift3RewardCount = this.getRewardCountByGiftId(
+            if (gift3 && _value3 > 0) {
+              const gift3RewardCount = getRewardCountByGiftId(
                 rewards,
                 gift3.id,
               );
 
               const allocatedCount = Math.min(
-                results[key] as number,
+                _value3,
                 gift3.maxCount - gift3RewardCount,
               );
 
@@ -374,8 +364,7 @@ export class RollsService {
             break;
 
           case 4:
-            const giftCodes = results[4];
-            const giftCodeSlice = (giftCodes as string[]).map((code) => ({
+            const giftCodeSlice = (value as string[]).map((code) => ({
               code,
             }));
 
@@ -384,6 +373,7 @@ export class RollsService {
                 await this.prisma.reward.create({
                   data: {
                     userUin: uin,
+                    count: giftCodeSlice.length,
                     giftCodes: {
                       connect: giftCodeSlice,
                     },
@@ -405,53 +395,6 @@ export class RollsService {
       return null;
     } catch (err) {
       throw new Error(`Error creating rewards: ${err.message}`);
-    }
-  }
-
-  async getPool(uin: string) {
-    try {
-      const itemsWeight = {
-        1: 60,
-        2: 40,
-      };
-
-      const randomKey = weightedRandomSelector(itemsWeight);
-      const ballCount = randomNumber(24, 6);
-      const giftCodes = await this.prisma.giftCode.findMany({
-        where: { remainingCount: { gt: 0 } },
-      });
-      const giftCode = this.getRandomGiftCode(giftCodes, uin);
-
-      if (randomKey === 1) {
-        await this.prisma.user.update({
-          where: {
-            uin,
-          },
-          data: {
-            ballCount: { increment: ballCount },
-          },
-        });
-      } else if (randomKey === 2) {
-        await this.prisma.user.update({
-          where: {
-            uin,
-          },
-          data: {
-            giftCodes: { connect: { id: giftCode?.id } },
-          },
-        });
-      }
-
-      return {
-        code: 1,
-        msg: 'Success',
-        data: {
-          ballCount,
-          giftCode: giftCode?.code,
-        },
-      };
-    } catch (error) {
-      return { code: 0, msg: 'Get pool error: ' + JSON.stringify(error) };
     }
   }
 }

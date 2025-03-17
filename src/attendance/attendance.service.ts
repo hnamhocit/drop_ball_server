@@ -1,10 +1,8 @@
-import { getRandomGiftCode } from 'src/common/utils/gift-code'
+import { Injectable } from '@nestjs/common';
 
-import { Injectable } from '@nestjs/common'
-
-import { randomNumber } from '../common/utils/randomNumber'
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector'
-import { PrismaService } from '../prisma/prisma.service'
+import { randomNumber } from '../common/utils/randomNumber';
+import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AttendanceService {
@@ -33,7 +31,7 @@ export class AttendanceService {
       };
     }
 
-    const updatedUser = await this.prisma.user.update({
+    await this.prisma.user.update({
       where: { uin },
       data: {
         checkInCount: { increment: 1 },
@@ -55,18 +53,28 @@ export class AttendanceService {
       },
     ];
 
-    const weights = { 1: 30, 2: 70 };
+    const weights = new Map([
+      [1, 30],
+      [2, 70],
+    ]);
     const randomKey = weightedRandomSelector(weights);
     const giftCodes = await this.prisma.giftCode.findMany({
-      where: { remainingCount: { gt: 0 } },
+      where: { users: { none: { uin } } },
     });
 
-    if (randomKey === 1) {
-      const giftCode = getRandomGiftCode(giftCodes, uin);
+    if (randomKey === 1 && giftCodes.length > 0) {
+      const randomIndex = Math.floor(Math.random() * giftCodes.length);
+      const code = giftCodes[randomIndex].code;
+
       results.push({
         type: 4,
         name: 'GIFT CODE',
-        value: giftCode?.code as string,
+        value: code,
+      });
+
+      await this.prisma.giftCode.update({
+        where: { code },
+        data: { users: { connect: { uin } } },
       });
     }
 

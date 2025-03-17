@@ -22,17 +22,6 @@ model Wish {
   updatedAt DateTime @updatedAt
 }
 
-model GiftCode {
-  id             Int      @id @default(autoincrement())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  code           String   @unique
-  remainingCount Int
-  users          User[]
-  usedByUins     Json
-  reward         Reward[]
-}
-
 model Gift {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
@@ -43,11 +32,21 @@ model Gift {
   rewards   Reward[]
 }
 
+model GiftCode {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  code       String   @unique
+  users      User[]
+  usedByUins Json
+  rewards    Reward[]
+}
+
 model Reward {
   id          Int        @id @default(autoincrement())
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
-  count       Int?
+  count       Int
   phoneNumber String?
   address     String?
   displayName String?

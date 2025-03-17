@@ -13,9 +13,4 @@ export class RollsController {
   random(@Body() data: RandomDTO, @Req() req: IRequest) {
     return this.rollsService.random(req.user.uin, data);
   }
-
-  @Get('pool')
-  getPool(@Req() req: IRequest) {
-    return this.rollsService.getPool(req.user.uin);
-  }
 }

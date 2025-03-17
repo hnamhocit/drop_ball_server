@@ -9,9 +9,19 @@ export class GiftcodesService {
 
   async createGiftCode(data: CreateGiftCodeDTO) {
     try {
+      const existingGiftCode = await this.prisma.giftCode.findUnique({
+        where: { code: data.code },
+      });
+
+      if (existingGiftCode) {
+        return {
+          code: 0,
+          msg: 'Gift code already exists!',
+        };
+      }
+
       const newGiftCode = await this.prisma.giftCode.create({
         data: {
-          remainingCount: data.remainingCount,
           code: data.code,
           usedByUins: [],
         },
