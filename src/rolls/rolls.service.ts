@@ -95,9 +95,6 @@ export class RollsService {
             }
 
             if (giftCodes.length === 0) {
-              console.log(
-                'User already have all gift codes or no gift codes exists!',
-              );
               break;
             }
 
@@ -105,7 +102,6 @@ export class RollsService {
             const existingCodes = new Set(giftCodeArray);
 
             if (existingCodes.size === giftCodes.length) {
-              console.log('Tất cả mã quà tặng đã được thêm!');
               return;
             }
 
@@ -170,7 +166,6 @@ export class RollsService {
       });
 
       if (gifts.length == 0) {
-        console.log('[GIFTS] is empty, create new...');
         /**
             Mô hình, số lượng 3
             Skin VIP, số lượng 10

@@ -34,7 +34,6 @@ export class AuthGuard implements CanActivate {
       });
 
       if (!existingUser) {
-        console.log('[USER] not found, create new...');
         await this.prisma.user.create({
           data: { uin, ballCount: 10 },
         });

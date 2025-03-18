@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
 
-import { randomNumber } from '../common/utils/randomNumber';
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
-import { PrismaService } from '../prisma/prisma.service';
+import { randomNumber } from '../common/utils/randomNumber'
+import { weightedRandomSelector } from '../common/utils/weightedRandomSelector'
+import { PrismaService } from '../prisma/prisma.service'
 
 @Injectable()
 export class AttendanceService {
@@ -97,7 +97,5 @@ export class AttendanceService {
         dailyRewardClaimed: false,
       },
     });
-
-    console.log(`Daily check-in reset completed on ${today.toISOString()}`);
   }
 }
