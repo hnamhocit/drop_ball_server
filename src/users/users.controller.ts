@@ -1,7 +1,8 @@
-import { Controller, Get, Patch, Req } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Req } from '@nestjs/common'
 
-import { IRequest } from '../common/types/request';
-import { UsersService } from './users.service';
+import { IRequest } from '../common/types/request'
+import { UpdateUserDTO } from './dtos/update-user.dto'
+import { UsersService } from './users.service'
 
 @Controller('users')
 export class UsersController {
@@ -13,5 +14,12 @@ export class UsersController {
   }
 
   @Patch('/me')
-  updateUser() {}
+  updateUser(@Req() req: IRequest, @Body() data: UpdateUserDTO) {
+    return this.usersService.updateUser(data, req.user.uin);
+  }
+
+  @Get('/me/rewards')
+  getUserRewards(@Req() req: IRequest) {
+    return this.usersService.getUserRewards(req.user.uin);
+  }
 }

@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { Gift } from '@prisma/client';
+import { Injectable } from '@nestjs/common'
+import { Gift } from '@prisma/client'
 
-import { randomNumber } from '../common/utils/randomNumber';
-import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward';
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
-import { PrismaService } from '../prisma/prisma.service';
-import { RandomDTO } from './dtos/random.dto';
+import { randomNumber } from '../common/utils/randomNumber'
+import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward'
+import { weightedRandomSelector } from '../common/utils/weightedRandomSelector'
+import { PrismaService } from '../prisma/prisma.service'
+import { RandomDTO } from './dtos/random.dto'
 
 @Injectable()
 export class RollsService {
@@ -59,7 +59,7 @@ export class RollsService {
         return { code: 0, msg: 'Get gifts error!' };
       }
 
-      for (let i = 1; i <= gateLength; i++) {
+      for (const i of data.gate) {
         if (i === 6) break;
 
         const weights = new Map<number, number>();

@@ -64,6 +64,7 @@ model User {
   dailyRewardClaimed Boolean    @default(false)
   uin                String     @unique
   ballCount          Int
+  score              Int        @default(0)
   rewards            Reward[]
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt

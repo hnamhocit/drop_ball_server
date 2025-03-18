@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
 
-import { PrismaService } from '../prisma/prisma.service';
-import { UpdateUserDTO } from './dtos/update-user.dto';
+import { PrismaService } from '../prisma/prisma.service'
+import { UpdateUserDTO } from './dtos/update-user.dto'
 
 @Injectable()
 export class UsersService {
@@ -37,6 +37,28 @@ export class UsersService {
         code: 0,
         msg: 'Update user error: ' + JSON.stringify(error),
         data: null,
+      };
+    }
+  }
+
+  async getUserRewards(uin: string) {
+    try {
+      const user = await this.prisma.user.findUnique({
+        where: { uin },
+        include: { rewards: { include: { gift: true, giftCodes: true } } },
+      });
+
+      return {
+        code: 1,
+        msg: 'Success',
+        data: {
+          rewards: user?.rewards,
+        },
+      };
+    } catch (error) {
+      return {
+        code: 0,
+        msg: 'Get user rewards error: ' + JSON.stringify(error),
       };
     }
   }
