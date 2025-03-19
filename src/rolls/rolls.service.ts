@@ -3,7 +3,7 @@ import { Gift } from '@prisma/client';
 
 import { randomNumber } from '../common/utils/randomNumber';
 import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward';
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
+import weightedRandom from '../common/utils/weightedRandom';
 import { PrismaService } from '../prisma/prisma.service';
 import { RandomDTO } from './dtos/random.dto';
 
@@ -103,18 +103,23 @@ export class RollsService {
       for (const i of data.gate) {
         if (i === 6) break;
 
+        const totalRatios = data.ratios.reduce((acc, ratio) => acc + ratio, 0);
         const weights = new Map<number, number>();
         for (let j = i; j < 6; j++) {
-          weights.set(j, j === 1 ? 1 : 3);
+          weights.set(j, data.ratios[j - 1]);
         }
+        weights.set(6, totalRatios);
 
-        const selectedGate = weightedRandomSelector(weights);
+        const selectedGate = weightedRandom(weights);
 
         switch (selectedGate) {
           case 1:
           case 2:
           case 3:
-            results.set(selectedGate, (results.get(i) as number) + 1);
+            results.set(
+              selectedGate,
+              (results.get(selectedGate) as number) + 1,
+            );
             break;
 
           case 4:
@@ -143,7 +148,7 @@ export class RollsService {
             break;
 
           case 5:
-            const ballCount = randomNumber(2, 1);
+            const ballCount = randomNumber(2, 0);
 
             await this.prisma.user.update({
               where: { uin },

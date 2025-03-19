@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 
-import { randomNumber } from '../common/utils/randomNumber'
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector'
-import { PrismaService } from '../prisma/prisma.service'
+import { randomNumber } from '../common/utils/randomNumber';
+import weightedRandom from '../common/utils/weightedRandom';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class AttendanceService {
@@ -57,10 +57,11 @@ export class AttendanceService {
     ];
 
     const weights = new Map([
-      [1, 30],
-      [2, 70],
+      [1, 20],
+      [2, 80],
     ]);
-    const randomKey = weightedRandomSelector(weights);
+
+    const randomKey = weightedRandom(weights);
     const giftCodes = await this.prisma.giftCode.findMany({
       where: { users: { none: { uin } } },
     });
