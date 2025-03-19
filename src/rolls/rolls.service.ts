@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common'
-import { Gift } from '@prisma/client'
+import { Injectable } from '@nestjs/common';
+import { Gift } from '@prisma/client';
 
-import { randomNumber } from '../common/utils/randomNumber'
-import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward'
-import { weightedRandomSelector } from '../common/utils/weightedRandomSelector'
-import { PrismaService } from '../prisma/prisma.service'
-import { RandomDTO } from './dtos/random.dto'
+import { randomNumber } from '../common/utils/randomNumber';
+import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward';
+import { weightedRandomSelector } from '../common/utils/weightedRandomSelector';
+import { PrismaService } from '../prisma/prisma.service';
+import { RandomDTO } from './dtos/random.dto';
 
 @Injectable()
 export class RollsService {
@@ -52,11 +52,52 @@ export class RollsService {
         [5, 0],
       ]);
 
-      const gateLength = data.gate.length;
+      const giftsCount = await this.prisma.gift.count();
+      const giftCodesCount = await this.prisma.giftCode.count();
+
+      if (giftCodesCount === 0) {
+        const giftCodes = Array.from({ length: 200 }, (_, i) => ({
+          code: `GIFTCODE${i + 1}`,
+          usedByUins: [],
+        }));
+
+        await this.prisma.giftCode.createMany({
+          data: giftCodes,
+          skipDuplicates: true,
+        });
+      }
+
+      if (giftsCount === 0) {
+        await this.prisma.gift.createMany({
+          data: [
+            { name: 'Model', maxCount: 3, index: 1 },
+            { name: 'Skin VIP', maxCount: 10, index: 2 },
+            { name: 'Skin DIY', maxCount: 30, index: 3 },
+          ],
+        });
+      }
+
       const gifts = await this.prisma.gift.findMany();
 
       if (!gifts) {
         return { code: 0, msg: 'Get gifts error!' };
+      }
+
+      const giftCodes = await this.prisma.giftCode.findMany({
+        where: {
+          users: {
+            none: {
+              uin,
+            },
+          },
+        },
+      });
+
+      if (!giftCodes) {
+        return {
+          code: 0,
+          msg: 'Get gift codes error!',
+        };
       }
 
       for (const i of data.gate) {
@@ -77,27 +118,6 @@ export class RollsService {
             break;
 
           case 4:
-            const giftCodes = await this.prisma.giftCode.findMany({
-              where: {
-                users: {
-                  none: {
-                    uin,
-                  },
-                },
-              },
-            });
-
-            if (!giftCodes) {
-              return {
-                code: 0,
-                msg: 'Get giftcodes error or length = 0!',
-              };
-            }
-
-            if (giftCodes.length === 0) {
-              break;
-            }
-
             const giftCodeArray = (results.get(4) as string[]) || [];
             const existingCodes = new Set(giftCodeArray);
 
@@ -147,7 +167,33 @@ export class RollsService {
       return {
         code: 1,
         msg: 'Get random gift successfully!',
-        data: Object.fromEntries(results),
+        data: [
+          {
+            type: 1,
+            name: 'Modal',
+            value: results.get(1),
+          },
+          {
+            type: 2,
+            name: 'Skin VIP',
+            value: results.get(2),
+          },
+          {
+            type: 3,
+            name: 'Skin DIY',
+            value: results.get(3),
+          },
+          {
+            type: 4,
+            name: 'Gift Code',
+            value: results.get(4),
+          },
+          {
+            type: 5,
+            name: 'Ball',
+            value: results.get(5),
+          },
+        ],
       };
     } catch (error) {
       console.error(error);
@@ -164,37 +210,6 @@ export class RollsService {
       const rewards = await this.prisma.reward.findMany({
         where: { userUin: uin },
       });
-
-      if (gifts.length == 0) {
-        /**
-            Mô hình, số lượng 3
-            Skin VIP, số lượng 10
-            Skin DIY, số lượng 30
-         */
-        await this.prisma.gift.create({
-          data: {
-            name: 'Model',
-            maxCount: 3,
-            index: 1,
-          },
-        });
-
-        await this.prisma.gift.create({
-          data: {
-            name: 'Skin VIP',
-            maxCount: 10,
-            index: 2,
-          },
-        });
-
-        await this.prisma.gift.create({
-          data: {
-            name: 'Skin DIY',
-            maxCount: 30,
-            index: 3,
-          },
-        });
-      }
 
       for (const [key, value] of results) {
         switch (key) {
