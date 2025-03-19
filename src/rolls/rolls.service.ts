@@ -167,33 +167,7 @@ export class RollsService {
       return {
         code: 1,
         msg: 'Get random gift successfully!',
-        data: [
-          {
-            type: 1,
-            name: 'Modal',
-            value: results.get(1),
-          },
-          {
-            type: 2,
-            name: 'Skin VIP',
-            value: results.get(2),
-          },
-          {
-            type: 3,
-            name: 'Skin DIY',
-            value: results.get(3),
-          },
-          {
-            type: 4,
-            name: 'Gift Code',
-            value: results.get(4),
-          },
-          {
-            type: 5,
-            name: 'Ball',
-            value: results.get(5),
-          },
-        ],
+        data: Object.fromEntries(results),
       };
     } catch (error) {
       console.error(error);
