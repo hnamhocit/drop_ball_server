@@ -114,7 +114,6 @@ export class UsersService {
         },
       };
     } catch (error) {
-      console.log(error);
       return {
         code: 0,
         msg: 'Get user rewards error: ' + JSON.stringify(error),
