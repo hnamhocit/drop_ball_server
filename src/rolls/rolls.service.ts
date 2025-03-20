@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Gift } from '@prisma/client';
 
 import { randomNumber } from '../common/utils/randomNumber';
@@ -8,8 +8,23 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RandomDTO } from './dtos/random.dto';
 
 @Injectable()
-export class RollsService {
+export class RollsService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
+
+  async onModuleInit() {
+    try {
+      const success = await this.initGiftsAndGiftCodes();
+
+      if (!success) {
+        return { code: 0, msg: 'Init gifts and giftcodes error!' };
+      }
+    } catch (error) {
+      return {
+        code: 0,
+        msg: 'Init gifts and giftcodes error: ' + JSON.stringify(error),
+      };
+    }
+  }
 
   async random(uin: string, data: RandomDTO) {
     try {
@@ -51,31 +66,6 @@ export class RollsService {
         [4, []],
         [5, 0],
       ]);
-
-      const giftsCount = await this.prisma.gift.count();
-      const giftCodesCount = await this.prisma.giftCode.count();
-
-      if (giftCodesCount === 0) {
-        const giftCodes = Array.from({ length: 200 }, (_, i) => ({
-          code: `GIFTCODE${i + 1}`,
-          usedByUins: [],
-        }));
-
-        await this.prisma.giftCode.createMany({
-          data: giftCodes,
-          skipDuplicates: true,
-        });
-      }
-
-      if (giftsCount === 0) {
-        await this.prisma.gift.createMany({
-          data: [
-            { name: 'Model', maxCount: 3, index: 1 },
-            { name: 'Skin VIP', maxCount: 10, index: 2 },
-            { name: 'Skin DIY', maxCount: 30, index: 3 },
-          ],
-        });
-      }
 
       const gifts = await this.prisma.gift.findMany();
 
@@ -389,6 +379,39 @@ export class RollsService {
       return null;
     } catch (err) {
       throw new Error(`Error creating rewards: ${err.message}`);
+    }
+  }
+
+  private async initGiftsAndGiftCodes() {
+    try {
+      const giftsCount = await this.prisma.gift.count();
+      const giftCodesCount = await this.prisma.giftCode.count();
+
+      if (giftCodesCount === 0) {
+        const giftCodes = Array.from({ length: 200 }, (_, i) => ({
+          code: `GIFTCODE${i + 1}`,
+          usedByUins: [],
+        }));
+
+        await this.prisma.giftCode.createMany({
+          data: giftCodes,
+          skipDuplicates: true,
+        });
+      }
+
+      if (giftsCount === 0) {
+        await this.prisma.gift.createMany({
+          data: [
+            { name: 'Figure premium Mini World', maxCount: 3, index: 1 },
+            { name: 'Skin VVIP', maxCount: 10, index: 2 },
+            { name: 'Set vũ khí ngẫu nhiên', maxCount: 10, index: 3 },
+          ],
+        });
+      }
+
+      return true;
+    } catch (err) {
+      return false;
     }
   }
 }
