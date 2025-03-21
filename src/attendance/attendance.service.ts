@@ -34,16 +34,28 @@ export class AttendanceService {
       };
     }
 
+    const _today = new Date();
+    const dayOfWeekNumber = _today.getDay();
+    let ballCount = 0;
+
+    if (dayOfWeekNumber === 2) {
+      ballCount = 3; // Monday
+    } else if (dayOfWeekNumber === 3) {
+      ballCount = 4; // Tuesday
+    } else {
+      ballCount = 5; // Other days
+    }
+
     await this.prisma.user.update({
       where: { uin },
       data: {
+        ballCount: { increment: ballCount },
         checkInCount: { increment: 1 },
         lastCheckIn: new Date(),
         dailyRewardClaimed: true,
       },
     });
 
-    const ballCount = randomNumber(2, 1);
     const results: {
       type: number;
       name: string;
@@ -57,8 +69,8 @@ export class AttendanceService {
     ];
 
     const weights = new Map([
-      [1, 20],
-      [2, 80],
+      [1, 10],
+      [2, 90],
     ]);
 
     const randomKey = weightedRandom(weights);
@@ -66,7 +78,7 @@ export class AttendanceService {
       where: { users: { none: { uin } } },
     });
 
-    if (randomKey === 1 && giftCodes.length > 0) {
+    if (randomKey === 1) {
       const randomIndex = Math.floor(Math.random() * giftCodes.length);
       const code = giftCodes[randomIndex].code;
 

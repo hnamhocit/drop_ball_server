@@ -93,12 +93,15 @@ export class RollsService implements OnModuleInit {
       for (const i of data.gate) {
         if (i === 6) break;
 
-        const totalRatios = data.ratios.reduce((acc, ratio) => acc + ratio, 0);
         const weights = new Map<number, number>();
+        let totalHitRatio = 0;
         for (let j = i; j < 6; j++) {
           weights.set(j, data.ratios[j - 1]);
+          totalHitRatio += data.ratios[j - 1];
         }
-        weights.set(6, totalRatios);
+
+        const missRatio = 100 - totalHitRatio;
+        weights.set(6, missRatio);
 
         const selectedGate = weightedRandom(weights);
 
@@ -404,7 +407,7 @@ export class RollsService implements OnModuleInit {
           data: [
             { name: 'Figure premium Mini World', maxCount: 3, index: 1 },
             { name: 'Skin VVIP', maxCount: 10, index: 2 },
-            { name: 'Set vũ khí ngẫu nhiên', maxCount: 10, index: 3 },
+            { name: 'Quà tặng hiện vật bí mật', maxCount: 10, index: 3 },
           ],
         });
       }

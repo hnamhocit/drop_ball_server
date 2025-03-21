@@ -1,6 +1,4 @@
-export default function weightedRandom(
-  weights: Map<number, number>,
-): number | 6 {
+export default function weightedRandom(weights: Map<number, number>): number {
   const totalWeight = Array.from(weights.values()).reduce(
     (sum, weight) => sum + weight,
     0,
