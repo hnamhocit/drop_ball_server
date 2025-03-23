@@ -2,7 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { Gift } from '@prisma/client';
 
 import { randomNumber } from '../common/utils/randomNumber';
-import { getGiftByIndex, getRewardCountByGiftId } from '../common/utils/reward';
+import { getGiftByIndex } from '../common/utils/reward';
 import weightedRandom from '../common/utils/weightedRandom';
 import { PrismaService } from '../prisma/prisma.service';
 import { RandomDTO } from './dtos/random.dto';
