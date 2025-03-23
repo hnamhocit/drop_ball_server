@@ -179,205 +179,80 @@ export class RollsService implements OnModuleInit {
     uin: string,
   ) {
     try {
-      const rewards = await this.prisma.reward.findMany({
-        where: { userUin: uin },
-      });
+      await this.prisma.$transaction(async (tx) => {
+        for (const [key, value] of results) {
+          switch (key) {
+            case 1:
+            case 2:
+            case 3: {
+              const giftIndex = key;
+              const _value = value as number;
 
-      for (const [key, value] of results) {
-        switch (key) {
-          case 1:
-            const gift1 = getGiftByIndex(gifts, 1);
-            const _value = value as number;
+              let remaining = _value;
 
-            if (gift1 && _value > 0) {
-              const gift1RewardCount = getRewardCountByGiftId(
-                rewards,
-                gift1.id,
-              );
+              for (let i = giftIndex; i <= 3; i++) {
+                const gift = getGiftByIndex(gifts, i);
 
-              const allocatedCount = Math.min(
-                _value,
-                gift1.maxCount - gift1RewardCount,
-              );
+                if (!gift || remaining <= 0) continue;
 
-              if (allocatedCount > 0) {
-                await this.prisma.reward.create({
-                  data: {
-                    giftId: gift1.id,
-                    count: allocatedCount,
-                    userUin: uin,
-                  },
+                const giftRewardCount = await tx.reward.aggregate({
+                  where: { userUin: uin, giftId: gift.id },
+                  _sum: { count: true },
                 });
-              }
 
-              let remaining = _value - allocatedCount;
-              if (remaining > 0) {
-                const gift2 = getGiftByIndex(gifts, 2);
+                const currentRewardCount = giftRewardCount._sum.count || 0;
 
-                if (gift2) {
-                  const gift2RewardCount = getRewardCountByGiftId(
-                    rewards,
-                    gift2.id,
-                  );
+                const allocatedCount = Math.min(
+                  remaining,
+                  gift.maxCount - currentRewardCount,
+                );
 
-                  const allocatedCount = Math.min(
-                    remaining,
-                    gift2.maxCount - gift2RewardCount,
-                  );
-
-                  if (allocatedCount > 0) {
-                    await this.prisma.reward.create({
-                      data: {
-                        giftId: gift2.id,
-                        count: allocatedCount,
-                        userUin: uin,
-                      },
-                    });
-                  }
-
-                  remaining -= allocatedCount;
-
-                  if (remaining > 0) {
-                    const gift3 = getGiftByIndex(gifts, 3);
-
-                    if (gift3) {
-                      const gift3RewardCount = getRewardCountByGiftId(
-                        rewards,
-                        gift3.id,
-                      );
-
-                      const allocatedCount = Math.min(
-                        remaining,
-                        gift3.maxCount - gift3RewardCount,
-                      );
-
-                      if (allocatedCount > 0) {
-                        await this.prisma.reward.create({
-                          data: {
-                            giftId: gift3.id,
-                            count: allocatedCount,
-                            userUin: uin,
-                          },
-                        });
-                      }
-                    }
-                  }
-                }
-              }
-            }
-
-            break;
-          case 2:
-            const gift2 = getGiftByIndex(gifts, 2);
-            const _value2 = value as number;
-
-            if (gift2 && _value2 > 0) {
-              const gift2RewardCount = getRewardCountByGiftId(
-                rewards,
-                gift2.id,
-              );
-
-              const allocatedCount = Math.min(
-                _value2,
-                gift2.maxCount - gift2RewardCount,
-              );
-
-              if (allocatedCount > 0) {
-                await this.prisma.reward.create({
-                  data: {
-                    giftId: gift2.id,
-                    count: allocatedCount,
-                    userUin: uin,
-                  },
-                });
-              }
-
-              const remaining = _value2 - allocatedCount;
-
-              if (remaining > 0) {
-                const gift3 = getGiftByIndex(gifts, 3);
-
-                if (gift3) {
-                  const gift3RewardCount = getRewardCountByGiftId(
-                    rewards,
-                    gift3.id,
-                  );
-
-                  const allocatedCount = Math.min(
-                    remaining,
-                    gift3.maxCount - gift3RewardCount,
-                  );
-
-                  if (allocatedCount > 0) {
-                    await this.prisma.reward.create({
-                      data: {
-                        giftId: gift3.id,
-                        count: allocatedCount,
-                        userUin: uin,
-                      },
-                    });
-                  }
-                }
-              }
-            }
-
-            break;
-          case 3:
-            const gift3 = getGiftByIndex(gifts, 3);
-            const _value3 = value as number;
-
-            if (gift3 && _value3 > 0) {
-              const gift3RewardCount = getRewardCountByGiftId(
-                rewards,
-                gift3.id,
-              );
-
-              const allocatedCount = Math.min(
-                _value3,
-                gift3.maxCount - gift3RewardCount,
-              );
-
-              if (allocatedCount > 0) {
-                await this.prisma.reward.create({
-                  data: {
-                    giftId: gift3.id,
-                    count: allocatedCount,
-                    userUin: uin,
-                  },
-                });
-              }
-            }
-
-            break;
-
-          case 4:
-            const giftCodeSlice = (value as string[]).map((code) => ({
-              code,
-            }));
-
-            if (giftCodeSlice.length > 0) {
-              try {
-                await this.prisma.reward.create({
-                  data: {
-                    userUin: uin,
-                    count: giftCodeSlice.length,
-                    giftCodes: {
-                      connect: giftCodeSlice,
+                if (allocatedCount > 0) {
+                  await tx.reward.create({
+                    data: {
+                      giftId: gift.id,
+                      count: allocatedCount,
+                      userUin: uin,
                     },
-                  },
-                });
-              } catch (err) {
-                console.error(err.message);
-                throw new Error(`Failed to create reward: ${err.message}`);
+                  });
+                }
+
+                remaining -= allocatedCount;
               }
+
+              break;
             }
 
-            break;
+            case 4: {
+              const giftCodeSlice = (value as string[]).map((code) => ({
+                code,
+              }));
 
-          default:
-            break;
+              if (giftCodeSlice.length > 0) {
+                try {
+                  await tx.reward.create({
+                    data: {
+                      userUin: uin,
+                      count: giftCodeSlice.length,
+                      giftCodes: {
+                        connect: giftCodeSlice,
+                      },
+                    },
+                  });
+                } catch (err) {
+                  console.error(err.message);
+                  throw new Error(`Failed to create reward: ${err.message}`);
+                }
+              }
+
+              break;
+            }
+
+            default:
+              break;
+          }
         }
-      }
+      });
 
       return null;
     } catch (err) {
