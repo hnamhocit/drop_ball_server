@@ -13,7 +13,13 @@ import { TopModule } from './top/top.module';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath:
+        process.env.NODE_ENV === 'production'
+          ? '.env.production'
+          : '.env.development',
+    }),
     PrismaModule,
     GiftcodesModule,
     RewardsModule,

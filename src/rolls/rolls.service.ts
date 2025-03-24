@@ -263,19 +263,19 @@ export class RollsService implements OnModuleInit {
   private async initGiftsAndGiftCodes() {
     try {
       const giftsCount = await this.prisma.gift.count();
-      const giftCodesCount = await this.prisma.giftCode.count();
+      // const giftCodesCount = await this.prisma.giftCode.count();
 
-      if (giftCodesCount === 0) {
-        const giftCodes = Array.from({ length: 200 }, (_, i) => ({
-          code: `GIFTCODE${i + 1}`,
-          usedByUins: [],
-        }));
+      // if (giftCodesCount === 0) {
+      //   const giftCodes = Array.from({ length: 200 }, (_, i) => ({
+      //     code: `GIFTCODE${i + 1}`,
+      //     usedByUins: [],
+      //   }));
 
-        await this.prisma.giftCode.createMany({
-          data: giftCodes,
-          skipDuplicates: true,
-        });
-      }
+      //   await this.prisma.giftCode.createMany({
+      //     data: giftCodes,
+      //     skipDuplicates: true,
+      //   });
+      // }
 
       if (giftsCount === 0) {
         await this.prisma.gift.createMany({
