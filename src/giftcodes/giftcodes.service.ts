@@ -1,4 +1,5 @@
-import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { PaginationDto } from '../common/dtos/pagination.dto';
+import * as XLSX from 'xlsx';
 
 import { Injectable } from '@nestjs/common';
 
@@ -72,5 +73,47 @@ export class GiftcodesService {
         msg: 'Get gift codes error: ' + JSON.stringify(error),
       };
     }
+  }
+
+  async uploadGiftCodes(file: Express.Multer.File) {
+    try {
+      const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+      const data = this.extractValues(jsonData).map((code) => ({
+        code,
+        usedByUins: [],
+      }));
+
+      await this.prisma.giftCode.createMany({
+        data,
+      });
+
+      return {
+        code: 1,
+        msg: 'Success',
+        data: data,
+      };
+    } catch (error) {
+      return {
+        code: 0,
+        msg: 'Upload gift codes error: ' + JSON.stringify(error),
+      };
+    }
+  }
+
+  private extractValues(data: any[]): string[] {
+    const valuesArray: string[] = [];
+
+    for (const row of data) {
+      const key = Object.keys(row)[0];
+      if (key) {
+        const value = row[key].trim();
+        valuesArray.push(value);
+      }
+    }
+
+    return valuesArray;
   }
 }

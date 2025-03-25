@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { diskStorage } from 'multer';
 
 import { GiftcodesModule } from './giftcodes/giftcodes.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -10,6 +11,8 @@ import { WishesModule } from './wishes/wishes.module';
 import { AttendanceModule } from './attendance/attendance.module';
 import { PlayModule } from './play/play.module';
 import { TopModule } from './top/top.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { extname } from 'path/win32';
 
 @Module({
   imports: [

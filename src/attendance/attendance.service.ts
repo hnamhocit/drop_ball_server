@@ -35,21 +35,11 @@ export class AttendanceService {
     }
 
     const _today = new Date();
-    const dayOfWeekNumber = _today.getDay();
-    let ballCount = 0;
-
-    if (dayOfWeekNumber === 2) {
-      ballCount = 3; // Monday
-    } else if (dayOfWeekNumber === 3) {
-      ballCount = 4; // Tuesday
-    } else {
-      ballCount = 5; // Other days
-    }
 
     await this.prisma.user.update({
       where: { uin },
       data: {
-        ballCount: { increment: ballCount },
+        ballCount: { increment: 5 },
         checkInCount: { increment: 1 },
         lastCheckIn: new Date(),
         dailyRewardClaimed: true,
@@ -64,7 +54,7 @@ export class AttendanceService {
       {
         type: 5,
         name: 'Ball',
-        value: ballCount,
+        value: 5,
       },
     ];
 
