@@ -39,7 +39,7 @@ export class RollsService implements OnModuleInit {
         };
       }
 
-      if (user.ballCount <= 0) {
+      if (user.ballCount < data.gate.length) {
         return { code: 0, msg: 'Insufficient ball count' };
       }
 
