@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service'
-import { UpdateScoreDTO } from './dtos/update-score.dto'
+import { PrismaService } from '../prisma/prisma.service';
+import { UpdateScoreDTO } from './dtos/update-score.dto';
 
 @Injectable()
 export class PlayService {
@@ -11,7 +11,7 @@ export class PlayService {
     try {
       const updatedUser = await this.prisma.user.update({
         where: { uin },
-        data: data,
+        data,
       });
 
       return {

@@ -169,7 +169,10 @@ export class RollsService implements OnModuleInit {
       };
     } catch (error) {
       console.error(error);
-      return { code: 0, msg: 'Internal server error' };
+      return {
+        code: 0,
+        msg: 'Internal server error: ' + JSON.stringify(error),
+      };
     }
   }
 

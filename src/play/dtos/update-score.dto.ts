@@ -1,4 +1,4 @@
-import { IsNumber } from 'class-validator'
+import { IsNumber, Validator } from 'class-validator';
 
 export class UpdateScoreDTO {
   @IsNumber()

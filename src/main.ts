@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationError, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { AuthGuard } from './common/guards/auth.guard';
 import { PrismaService } from './prisma/prisma.service';
+import { ValidateException } from './common/exceptions/validate.exception';
 
 const privateKeyPath = join(process.cwd(), 'ssl', 'privatekey.key');
 const certificatePath = join(process.cwd(), 'ssl', 'certificate.crt');
@@ -23,7 +24,21 @@ async function bootstrap() {
 
   app.enableCors();
   app.setGlobalPrefix('api');
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      exceptionFactory: (validationErrors: ValidationError[] = []) => {
+        return new ValidateException(
+          validationErrors.map((error) =>
+            Object.values(error.constraints ?? {}).join(', '),
+          ),
+        );
+      },
+    }),
+  );
+
   app.useGlobalGuards(new AuthGuard(app.get(PrismaService)));
   await app.listen(process.env.PORT ?? 8080);
 }
