@@ -34,8 +34,6 @@ export class AttendanceService {
       };
     }
 
-    const _today = new Date();
-
     await this.prisma.user.update({
       where: { uin },
       data: {
