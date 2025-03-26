@@ -86,9 +86,9 @@ export class UsersService {
       ];
 
       const getRewardType = (name: string | undefined) => {
-        if (name === 'Model') return 1;
-        if (name === 'Skin VIP') return 2;
-        if (name === 'Skin DIY') return 3;
+        if (name === 'Figure premium Mini World') return 1;
+        if (name === 'Skin VVIP') return 2;
+        if (name === 'Quà tặng hiện vật bí mật') return 3;
         return 4;
       };
 
