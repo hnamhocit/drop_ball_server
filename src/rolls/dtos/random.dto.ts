@@ -17,5 +17,6 @@ export class RandomDTO {
   @IsArray()
   @ArrayMinSize(5)
   @ArrayMaxSize(5)
-  ratios: number[] = [5, 10, 10, 30, 30];
+  @IsNumber({}, { each: true })
+  ratios: number[] = [2.5, 5, 5, 30, 30];
 }

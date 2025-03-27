@@ -6,7 +6,7 @@ import { TopService } from './top.service';
 export class TopController {
   constructor(private readonly topService: TopService) {}
 
-  @Get('scores')
+  @Get()
   getTopScores(@Query('count') count: string = '10') {
     return this.topService.getTopScores(Number(count));
   }

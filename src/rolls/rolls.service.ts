@@ -28,16 +28,8 @@ export class RollsService implements OnModuleInit {
 
   async random(uin: string, data: RandomDTO) {
     try {
-      const user = await this.prisma.user.findFirst({
-        where: { uin },
-      });
-
-      if (!user) {
-        return {
-          code: 0,
-          msg: 'User not found!',
-        };
-      }
+      const user = await this.prisma.user.findUnique({ where: { uin } });
+      if (!user) return { code: 0, msg: 'User not found!' };
 
       if (user.ballCount < data.gate.length) {
         return { code: 0, msg: 'Insufficient ball count' };
@@ -48,11 +40,7 @@ export class RollsService implements OnModuleInit {
         data: { ballCount: { decrement: data.gate.length } },
       });
 
-      const isValidGate = data.gate.every(
-        (gateValue) => gateValue >= 1 && gateValue <= 6,
-      );
-
-      if (!isValidGate) {
+      if (!data.gate.every((gateValue) => gateValue >= 1 && gateValue <= 6)) {
         return {
           code: 0,
           msg: 'Invalid gate values! Gate values must be between 1 and 6.',
@@ -60,35 +48,25 @@ export class RollsService implements OnModuleInit {
       }
 
       const results = new Map<number, number | string[]>([
-        [1, 0],
-        [2, 0],
-        [3, 0],
-        [4, []],
-        [5, 0],
+        [1, 0], // Index 1
+        [2, 0], // Index 2
+        [3, 0], // Index 3
+        [4, []], // Mã quà tặng
+        [5, 0], // Số bóng thưởng
       ]);
 
-      const gifts = await this.prisma.gift.findMany();
+      const [gifts, giftCodes] = await Promise.all([
+        this.prisma.gift.findMany(),
+        this.prisma.giftCode.findMany({
+          where: { users: { none: { uin } } },
+        }),
+      ]);
 
-      if (!gifts) {
-        return { code: 0, msg: 'Get gifts error!' };
+      if (!gifts || !giftCodes) {
+        return { code: 0, msg: 'Error fetching gifts or gift codes!' };
       }
 
-      const giftCodes = await this.prisma.giftCode.findMany({
-        where: {
-          users: {
-            none: {
-              uin,
-            },
-          },
-        },
-      });
-
-      if (!giftCodes) {
-        return {
-          code: 0,
-          msg: 'Get gift codes error!',
-        };
-      }
+      console.log({ radios: data.ratios });
 
       for (const i of data.gate) {
         if (i === 6) break;
@@ -99,9 +77,7 @@ export class RollsService implements OnModuleInit {
           weights.set(j, data.ratios[j - 1]);
           totalHitRatio += data.ratios[j - 1];
         }
-
-        const missRatio = 100 - totalHitRatio;
-        weights.set(6, missRatio);
+        weights.set(6, 100 - totalHitRatio);
 
         const selectedGate = weightedRandom(weights);
 
@@ -116,39 +92,28 @@ export class RollsService implements OnModuleInit {
             break;
 
           case 4:
-            const giftCodeArray = (results.get(4) as string[]) || [];
-            const existingCodes = new Set(giftCodeArray);
+            const existingCodes = new Set(results.get(4) as string[]);
+            if (existingCodes.size < giftCodes.length) {
+              let newCode: string;
+              do {
+                const randomIndex = Math.floor(
+                  Math.random() * giftCodes.length,
+                );
+                newCode = giftCodes[randomIndex].code;
+              } while (existingCodes.has(newCode));
 
-            if (existingCodes.size === giftCodes.length) {
-              return;
+              existingCodes.add(newCode);
+              results.set(4, Array.from(existingCodes));
             }
-
-            let newCode: string;
-            do {
-              const randomIndex = Math.floor(Math.random() * giftCodes.length);
-              newCode = giftCodes[randomIndex].code;
-            } while (existingCodes.has(newCode));
-
-            await this.prisma.giftCode.update({
-              where: { code: newCode },
-              data: {
-                users: { connect: { uin } },
-              },
-            });
-
-            existingCodes.add(newCode);
-            results.set(4, Array.from(existingCodes));
             break;
 
           case 5:
             const ballCount = randomNumber(2, 0);
-
+            results.set(5, (results.get(5) as number) + ballCount);
             await this.prisma.user.update({
               where: { uin },
               data: { ballCount: { increment: ballCount } },
             });
-
-            results.set(5, (results.get(5) as number) + ballCount);
             break;
 
           default:
@@ -157,7 +122,7 @@ export class RollsService implements OnModuleInit {
       }
 
       try {
-        await this.createReward(results, gifts, user.uin);
+        await this.createReward(results, gifts, uin);
       } catch (err) {
         return { code: 0, msg: `Create reward error: ${err.message}` };
       }
@@ -188,41 +153,30 @@ export class RollsService implements OnModuleInit {
             case 1:
             case 2:
             case 3: {
-              const giftIndex = key;
               const _value = value as number;
 
               let remaining = _value;
-
-              for (let i = giftIndex; i <= 3; i++) {
+              for (let i = key; i <= 3 && remaining > 0; i++) {
                 const gift = getGiftByIndex(gifts, i);
 
-                if (!gift || remaining <= 0) continue;
+                if (!gift) continue;
 
-                const giftRewardCount = await tx.reward.aggregate({
+                const hasExistingReward = await tx.reward.findFirst({
                   where: { userUin: uin, giftId: gift.id },
-                  _sum: { count: true },
                 });
 
-                const currentRewardCount = giftRewardCount._sum.count || 0;
+                if (hasExistingReward) continue;
 
-                const allocatedCount = Math.min(
-                  remaining,
-                  gift.maxCount - currentRewardCount,
-                );
+                await tx.reward.create({
+                  data: {
+                    giftId: gift.id,
+                    count: 1,
+                    userUin: uin,
+                  },
+                });
 
-                if (allocatedCount > 0) {
-                  await tx.reward.create({
-                    data: {
-                      giftId: gift.id,
-                      count: allocatedCount,
-                      userUin: uin,
-                    },
-                  });
-                }
-
-                remaining -= allocatedCount;
+                remaining -= 1;
               }
-
               break;
             }
 
@@ -237,9 +191,7 @@ export class RollsService implements OnModuleInit {
                     data: {
                       userUin: uin,
                       count: giftCodeSlice.length,
-                      giftCodes: {
-                        connect: giftCodeSlice,
-                      },
+                      giftCodes: { connect: giftCodeSlice },
                     },
                   });
                 } catch (err) {
@@ -247,7 +199,6 @@ export class RollsService implements OnModuleInit {
                   throw new Error(`Failed to create reward: ${err.message}`);
                 }
               }
-
               break;
             }
 
