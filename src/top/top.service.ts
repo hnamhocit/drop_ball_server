@@ -9,6 +9,11 @@ export class TopService {
   async getTopScores(count: number) {
     try {
       const topScores = await this.prisma.user.findMany({
+        where: {
+          score: {
+            gt: 0,
+          },
+        },
         orderBy: { score: 'desc' },
         take: count,
       });
