@@ -66,8 +66,6 @@ export class RollsService implements OnModuleInit {
         return { code: 0, msg: 'Error fetching gifts or gift codes!' };
       }
 
-      console.log({ radios: data.ratios });
-
       for (const i of data.gate) {
         if (i === 6) break;
 
