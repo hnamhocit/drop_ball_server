@@ -78,10 +78,22 @@ export class RollsService implements OnModuleInit {
           case 1:
           case 2:
           case 3:
-            results.set(
-              selectedGate,
-              (results.get(selectedGate) as number) + 1,
-            );
+            const gift = await this.prisma.gift.findFirst({
+              where: {
+                index: selectedGate,
+              },
+            });
+
+            const existingReward = await this.prisma.reward.findFirst({
+              where: { userUin: uin, gift: { index: selectedGate } },
+            });
+
+            if (gift && gift.maxCount === 0) continue;
+
+            if (results.get(selectedGate) === 0 && !existingReward) {
+              results.set(selectedGate, 1);
+            }
+
             break;
 
           case 4:
@@ -148,10 +160,6 @@ export class RollsService implements OnModuleInit {
           case 2:
           case 3: {
             const _value = value as number;
-            // db
-            // 1 1
-            // 2 0
-            // 3 0
 
             let remaining = _value;
 
@@ -198,6 +206,7 @@ export class RollsService implements OnModuleInit {
 
               remaining -= 1;
             }
+
             break;
           }
 
