@@ -162,16 +162,32 @@ export class RollsService implements OnModuleInit {
 
                 if (!gift) continue;
 
-                const [hasExistingReward, rewardCount] = await Promise.all([
-                  tx.reward.findFirst({
-                    where: { userUin: uin, giftId: gift.id },
-                  }),
-                  tx.reward.count({
-                    where: { giftId: gift.id },
-                  }),
-                ]);
+                const hasExistingReward = await tx.reward.findFirst({
+                  where: { userUin: uin, giftId: gift.id },
+                });
 
-                if (hasExistingReward || rewardCount >= gift.maxCount) continue;
+                if (hasExistingReward) continue;
+
+                const _gift = await this.prisma.gift.findUnique({
+                  where: { id: gift.id },
+                });
+
+                if (!_gift) {
+                  return { code: 0, msg: 'Gift not found' };
+                }
+
+                if (_gift.maxCount <= 0) continue;
+
+                if (_gift.maxCount > 0) {
+                  await tx.gift.update({
+                    where: {
+                      id: gift.id,
+                    },
+                    data: {
+                      maxCount: { decrement: 1 },
+                    },
+                  });
+                }
 
                 await tx.reward.create({
                   data: {
