@@ -51,7 +51,7 @@ const decrypt = (encryptedText: string) => {
   }
 };
 
-const uins = ['10001', '10002', '10003', '10004'];
+const uins = ['1', '10002', '10003', '10004'];
 for (const testUIN of uins) {
   console.log('Bearer ' + encrypt(testUIN));
 }

@@ -91,18 +91,34 @@ export class RollsService implements OnModuleInit {
 
           case 4:
             const existingCodes = new Set(results.get(4) as string[]);
-            if (existingCodes.size < giftCodes.length) {
-              let newCode: string;
-              do {
-                const randomIndex = Math.floor(
-                  Math.random() * giftCodes.length,
-                );
-                newCode = giftCodes[randomIndex].code;
-              } while (existingCodes.has(newCode));
+            const userRewards = await this.prisma.reward.findMany({
+              where: {
+                userUin: uin,
+              },
+            });
 
-              existingCodes.add(newCode);
-              results.set(4, Array.from(existingCodes));
+            const newGiftCodes: string[] = [];
+
+            for (const reward of userRewards) {
+              newGiftCodes.push(...(reward.giftCodes as string[]));
             }
+
+            let newCode: string;
+            do {
+              const randomIndex = Math.floor(Math.random() * giftCodes.length);
+              newCode = giftCodes[randomIndex].code;
+            } while (newGiftCodes.includes(newCode));
+
+            existingCodes.add(newCode);
+
+            await this.prisma.giftCode.delete({
+              where: {
+                code: newCode,
+              },
+            });
+
+            results.set(4, Array.from(existingCodes));
+
             break;
 
           case 5:
@@ -175,6 +191,7 @@ export class RollsService implements OnModuleInit {
                     giftId: gift.id,
                     count: 1,
                     userUin: uin,
+                    giftCodes: [],
                   },
                 });
 
