@@ -142,86 +142,89 @@ export class RollsService implements OnModuleInit {
     uin: string,
   ) {
     try {
-      await this.prisma.$transaction(async (tx) => {
-        for (const [key, value] of results) {
-          switch (key) {
-            case 1:
-            case 2:
-            case 3: {
-              const _value = value as number;
+      for (const [key, value] of results) {
+        switch (key) {
+          case 1:
+          case 2:
+          case 3: {
+            const _value = value as number;
+            // db
+            // 1 1
+            // 2 0
+            // 3 0
 
-              let remaining = _value;
-              for (let i = key; i <= 3 && remaining > 0; i++) {
-                const gift = getGiftByIndex(gifts, i);
+            let remaining = _value;
 
-                if (!gift) continue;
+            for (let i = key; i <= 3 && remaining > 0; i++) {
+              const gift = getGiftByIndex(gifts, i);
 
-                const hasExistingReward = await tx.reward.findFirst({
-                  where: { userUin: uin, giftId: gift.id },
-                });
+              if (!gift) continue;
 
-                if (hasExistingReward) continue;
+              const hasExistingReward = await this.prisma.reward.findFirst({
+                where: { userUin: uin, giftId: gift.id },
+              });
 
-                const _gift = await this.prisma.gift.findUnique({
-                  where: { id: gift.id },
-                });
+              if (hasExistingReward) continue;
 
-                if (!_gift) {
-                  return { code: 0, msg: 'Gift not found' };
-                }
+              const _gift = await this.prisma.gift.findUnique({
+                where: { id: gift.id },
+              });
 
-                if (_gift.maxCount <= 0) continue;
+              if (!_gift) {
+                return { code: 0, msg: 'Gift not found' };
+              }
 
-                if (_gift.maxCount > 0) {
-                  await tx.gift.update({
-                    where: {
-                      id: gift.id,
-                    },
-                    data: {
-                      maxCount: { decrement: 1 },
-                    },
-                  });
-                }
+              if (_gift.maxCount <= 0) continue;
 
-                await tx.reward.create({
+              if (_gift.maxCount > 0) {
+                await this.prisma.gift.update({
+                  where: {
+                    id: gift.id,
+                  },
                   data: {
-                    giftId: gift.id,
-                    count: 1,
-                    userUin: uin,
-                    giftCodes: [],
+                    maxCount: { decrement: 1 },
                   },
                 });
-
-                remaining -= 1;
               }
-              break;
+
+              await this.prisma.reward.create({
+                data: {
+                  giftId: gift.id,
+                  count: 1,
+                  userUin: uin,
+                  giftCodes: [],
+                },
+              });
+
+              remaining -= 1;
             }
-
-            case 4: {
-              const giftCodeSlice = value as string[];
-
-              if (giftCodeSlice.length > 0) {
-                try {
-                  await tx.reward.create({
-                    data: {
-                      userUin: uin,
-                      count: giftCodeSlice.length,
-                      giftCodes: giftCodeSlice,
-                    },
-                  });
-                } catch (err) {
-                  console.error(err.message);
-                  throw new Error(`Failed to create reward: ${err.message}`);
-                }
-              }
-              break;
-            }
-
-            default:
-              break;
+            break;
           }
+
+          case 4: {
+            const giftCodeSlice = value as string[];
+
+            if (giftCodeSlice.length > 0) {
+              try {
+                await this.prisma.reward.create({
+                  data: {
+                    userUin: uin,
+                    count: giftCodeSlice.length,
+                    giftCodes: giftCodeSlice,
+                  },
+                });
+              } catch (err) {
+                console.error(err.message);
+                throw new Error(`Failed to create reward: ${err.message}`);
+              }
+            }
+            break;
+          }
+
+          default:
+            break;
         }
-      });
+      }
 
       return null;
     } catch (err) {
