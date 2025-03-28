@@ -28,7 +28,6 @@ CREATE TABLE `GiftCode` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `code` VARCHAR(191) NOT NULL,
-    `usedByUins` JSON NOT NULL,
 
     UNIQUE INDEX `GiftCode_code_key`(`code`),
     PRIMARY KEY (`id`)
@@ -66,15 +65,6 @@ CREATE TABLE `User` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- CreateTable
-CREATE TABLE `_GiftCodeToUser` (
-    `A` INTEGER NOT NULL,
-    `B` INTEGER NOT NULL,
-
-    UNIQUE INDEX `_GiftCodeToUser_AB_unique`(`A`, `B`),
-    INDEX `_GiftCodeToUser_B_index`(`B`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
 -- AddForeignKey
 ALTER TABLE `Wish` ADD CONSTRAINT `Wish_userUin_fkey` FOREIGN KEY (`userUin`) REFERENCES `User`(`uin`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -83,9 +73,3 @@ ALTER TABLE `Reward` ADD CONSTRAINT `Reward_giftId_fkey` FOREIGN KEY (`giftId`) 
 
 -- AddForeignKey
 ALTER TABLE `Reward` ADD CONSTRAINT `Reward_userUin_fkey` FOREIGN KEY (`userUin`) REFERENCES `User`(`uin`) ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `_GiftCodeToUser` ADD CONSTRAINT `_GiftCodeToUser_A_fkey` FOREIGN KEY (`A`) REFERENCES `GiftCode`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE `_GiftCodeToUser` ADD CONSTRAINT `_GiftCodeToUser_B_fkey` FOREIGN KEY (`B`) REFERENCES `User`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;

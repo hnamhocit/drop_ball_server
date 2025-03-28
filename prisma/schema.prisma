@@ -33,12 +33,10 @@ model Gift {
 }
 
 model GiftCode {
-  id         Int      @id @default(autoincrement())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  code       String   @unique
-  users      User[]
-  usedByUins Json
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  code      String   @unique
 }
 
 model Reward {
@@ -54,19 +52,18 @@ model Reward {
 }
 
 model User {
-  id                 Int        @id @default(autoincrement())
+  id                 Int       @id @default(autoincrement())
   address            String?
   phoneNumber        String?
   displayName        String?
-  checkInCount       Int        @default(0)
+  checkInCount       Int       @default(0)
   lastCheckIn        DateTime?
-  dailyRewardClaimed Boolean    @default(false)
-  uin                String     @unique
+  dailyRewardClaimed Boolean   @default(false)
+  uin                String    @unique
   ballCount          Int
-  score              Int        @default(0)
+  score              Int       @default(0)
   rewards            Reward[]
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
   wish               Wish?
-  giftCodes          GiftCode[]
 }

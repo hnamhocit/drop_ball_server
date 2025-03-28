@@ -55,15 +55,10 @@ export class RollsService implements OnModuleInit {
         [5, 0], // Số bóng thưởng
       ]);
 
-      const [gifts, giftCodes] = await Promise.all([
-        this.prisma.gift.findMany(),
-        this.prisma.giftCode.findMany({
-          where: { users: { none: { uin } } },
-        }),
-      ]);
+      const gifts = await this.prisma.gift.findMany();
 
-      if (!gifts || !giftCodes) {
-        return { code: 0, msg: 'Error fetching gifts or gift codes!' };
+      if (!gifts || !gifts.length) {
+        return { code: 0, msg: 'Error fetching gifts!' };
       }
 
       for (const i of data.gate) {
@@ -90,19 +85,18 @@ export class RollsService implements OnModuleInit {
             break;
 
           case 4:
-            if (giftCodes.length > 0) {
-              const existingCodes = new Set(results.get(4) as string[]);
+            const giftCode = await this.prisma.giftCode.findFirst();
 
-              const randomIndex = Math.floor(Math.random() * giftCodes.length);
-              let newCode = giftCodes[randomIndex].code;
+            if (giftCode) {
+              const existingCodes = new Set(results.get(4) as string[]);
 
               await this.prisma.giftCode.delete({
                 where: {
-                  code: newCode,
+                  code: giftCode.code,
                 },
               });
 
-              existingCodes.add(newCode);
+              existingCodes.add(giftCode.code);
               results.set(4, Array.from(existingCodes));
             }
 
