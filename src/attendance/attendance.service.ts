@@ -62,23 +62,19 @@ export class AttendanceService {
     ]);
 
     const randomKey = weightedRandom(weights);
-    const giftCodes = await this.prisma.giftCode.findMany({
-      where: { users: { none: { uin } } },
-    });
+    const giftCode = await this.prisma.giftCode.findFirst();
 
-    if (randomKey === 1) {
-      const randomIndex = Math.floor(Math.random() * giftCodes.length);
-      const code = giftCodes[randomIndex].code;
+    if (randomKey === 1 && giftCode) {
+      await this.prisma.giftCode.delete({
+        where: {
+          code: giftCode.code,
+        },
+      });
 
       results.push({
         type: 4,
         name: 'GIFT CODE',
-        value: code,
-      });
-
-      await this.prisma.giftCode.update({
-        where: { code },
-        data: { users: { connect: { uin } } },
+        value: giftCode.code,
       });
     }
 

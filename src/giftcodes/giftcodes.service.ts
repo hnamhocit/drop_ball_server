@@ -26,7 +26,6 @@ export class GiftcodesService {
       const newGiftCode = await this.prisma.giftCode.create({
         data: {
           code: data.code,
-          usedByUins: [],
         },
       });
 
