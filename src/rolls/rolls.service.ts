@@ -90,34 +90,39 @@ export class RollsService implements OnModuleInit {
             break;
 
           case 4:
-            const existingCodes = new Set(results.get(4) as string[]);
-            const userRewards = await this.prisma.reward.findMany({
-              where: {
-                userUin: uin,
-              },
-            });
+            if (giftCodes.length > 0) {
+              const existingCodes = new Set(results.get(4) as string[]);
+              const userRewards = await this.prisma.reward.findMany({
+                where: {
+                  userUin: uin,
+                },
+              });
 
-            const newGiftCodes: string[] = [];
+              const newGiftCodes: string[] = [];
 
-            for (const reward of userRewards) {
-              newGiftCodes.push(...(reward.giftCodes as string[]));
+              for (const reward of userRewards) {
+                console.log(reward.giftCodes);
+                newGiftCodes.push(...(reward.giftCodes as string[]));
+              }
+
+              let newCode: string;
+              do {
+                const randomIndex = Math.floor(
+                  Math.random() * giftCodes.length,
+                );
+                newCode = giftCodes[randomIndex].code;
+              } while (newGiftCodes.includes(newCode));
+
+              existingCodes.add(newCode);
+
+              await this.prisma.giftCode.delete({
+                where: {
+                  code: newCode,
+                },
+              });
+
+              results.set(4, Array.from(existingCodes));
             }
-
-            let newCode: string;
-            do {
-              const randomIndex = Math.floor(Math.random() * giftCodes.length);
-              newCode = giftCodes[randomIndex].code;
-            } while (newGiftCodes.includes(newCode));
-
-            existingCodes.add(newCode);
-
-            await this.prisma.giftCode.delete({
-              where: {
-                code: newCode,
-              },
-            });
-
-            results.set(4, Array.from(existingCodes));
 
             break;
 
