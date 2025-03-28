@@ -50,14 +50,10 @@ export class UsersService {
             select: {
               count: true,
               createdAt: true,
+              giftCodes: true,
               gift: {
                 select: {
                   name: true,
-                },
-              },
-              giftCodes: {
-                select: {
-                  code: true,
                 },
               },
             },
@@ -95,11 +91,12 @@ export class UsersService {
       user?.rewards.forEach((reward) => {
         const type = getRewardType(reward.gift?.name);
         const index = type - 1;
+        const giftCodes = reward.giftCodes as string[];
 
-        if (type === 4 && reward.giftCodes.length > 0) {
+        if (type === 4 && giftCodes.length > 0) {
           results[type - 1].giftList = [
             ...(results[type - 1].giftList as string[]),
-            ...reward.giftCodes.map((gc) => gc.code),
+            ...giftCodes,
           ];
         }
 

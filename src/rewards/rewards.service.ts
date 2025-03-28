@@ -11,7 +11,7 @@ export class RewardsService {
     try {
       const [rewards, totalRecords] = await Promise.all([
         this.prisma.reward.findMany({
-          include: { gift: true, giftCodes: true },
+          include: { gift: true },
           skip: (page - 1) * pageSize,
           take: pageSize,
         }),
