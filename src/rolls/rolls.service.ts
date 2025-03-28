@@ -159,11 +159,16 @@ export class RollsService implements OnModuleInit {
 
                 if (!gift) continue;
 
-                const hasExistingReward = await tx.reward.findFirst({
-                  where: { userUin: uin, giftId: gift.id },
-                });
+                const [hasExistingReward, rewardCount] = await Promise.all([
+                  tx.reward.findFirst({
+                    where: { userUin: uin, giftId: gift.id },
+                  }),
+                  tx.reward.count({
+                    where: { giftId: gift.id },
+                  }),
+                ]);
 
-                if (hasExistingReward) continue;
+                if (hasExistingReward || rewardCount >= gift.maxCount) continue;
 
                 await tx.reward.create({
                   data: {

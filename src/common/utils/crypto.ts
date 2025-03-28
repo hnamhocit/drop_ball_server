@@ -1,11 +1,11 @@
-import * as CryptoJS from 'crypto-js'
+import * as CryptoJS from 'crypto-js';
 
 const encrypt = (text: string) => {
   const secretKey = process.env.KEY?.replace(/\\n/g, '\n');
   const iv = CryptoJS.lib.WordArray.random(16);
   const encrypted = CryptoJS.AES.encrypt(
     text,
-    CryptoJS.enc.Hex.parse(secretKey),
+    CryptoJS.enc.Hex.parse(secretKey as string),
     {
       iv: iv,
       padding: CryptoJS.pad.Pkcs7,
@@ -35,7 +35,7 @@ const decrypt = (encryptedText: string) => {
 
     const decrypted = CryptoJS.AES.decrypt(
       cipherParams,
-      CryptoJS.enc.Hex.parse(secretKey),
+      CryptoJS.enc.Hex.parse(secretKey as string),
       {
         iv: iv,
         padding: CryptoJS.pad.Pkcs7,
@@ -50,5 +50,10 @@ const decrypt = (encryptedText: string) => {
     return;
   }
 };
+
+const uins = ['10001', '10002', '10003', '10004'];
+for (const testUIN of uins) {
+  console.log('Bearer ' + encrypt(testUIN));
+}
 
 export { decrypt, encrypt };
