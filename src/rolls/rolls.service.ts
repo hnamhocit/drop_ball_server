@@ -206,9 +206,7 @@ export class RollsService implements OnModuleInit {
             }
 
             case 4: {
-              const giftCodeSlice = (value as string[]).map((code) => ({
-                code,
-              }));
+              const giftCodeSlice = value as string[];
 
               if (giftCodeSlice.length > 0) {
                 try {
@@ -216,7 +214,7 @@ export class RollsService implements OnModuleInit {
                     data: {
                       userUin: uin,
                       count: giftCodeSlice.length,
-                      giftCodes: { connect: giftCodeSlice },
+                      giftCodes: giftCodeSlice,
                     },
                   });
                 } catch (err) {
