@@ -115,18 +115,19 @@ export class RollsService implements OnModuleInit {
             break;
 
           case 5:
-            const ballCount = randomNumber(2, 0);
-            results.set(5, (results.get(5) as number) + ballCount);
-            await this.prisma.user.update({
-              where: { uin },
-              data: { ballCount: { increment: ballCount } },
-            });
+            results.set(5, (results.get(5) as number) + 1);
             break;
 
           default:
             break;
         }
       }
+
+      // total increase ball count
+      await this.prisma.user.update({
+        where: { uin },
+        data: { ballCount: { increment: results.get(5) as number } },
+      });
 
       try {
         await this.createReward(results, gifts, uin);
